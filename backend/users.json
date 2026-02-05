@@ -1,0 +1,34 @@
+{
+  "admin@test.com": {
+    "password": "$2b$10$wV2G0Rcj37Jq1peGlyh8TuFxYmBEVuVrG1EkDVPc2yBBwvbx2aoYK",
+    "role": "admin",
+    "active": true
+  },
+  "free@test.com": {
+    "password": "$2b$10$Eph0XzWQ4lKJN2MmgUU4UeEF1dYPz8.KYNNB/VM1Hebz4cv.Bvq8e",
+    "role": "user",
+    "active": true,
+    "premium": true,
+    "approved": true,
+    "plan": "weekly",
+    "expiresAt": "2026-02-10T14:14:47.939Z"
+  },
+  "premium@test.com": {
+    "password": "$2b$10$/TjdZKFZZ9YaAewSijb/x.rP7jz64jL59oxXawYJjDrd/A9htppdS",
+    "role": "user",
+    "active": true,
+    "premium": true,
+    "approved": true,
+    "plan": "weekly",
+    "expiresAt": "2026-02-10T00:00:00.000Z"
+  },
+  "vipuser@test.com": {
+    "password": "$2b$10$J/XLP0YVZJYBxZGGliMz8uRx5V4kH5JEhCoePNEyXg/Nfw7mo.kSa",
+    "role": "user",
+    "active": true,
+    "premium": true,
+    "approved": true,
+    "plan": "weekly",
+    "expiresAt": "2026-02-10T09:56:54.732Z"
+  }
+}

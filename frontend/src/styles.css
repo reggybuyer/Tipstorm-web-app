@@ -1,0 +1,518 @@
+/* ==============================GLOBAL STYLES============================== */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ==============================LOGIN STYLES============================== */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  background: #f5f7fa;
+}
+
+.login-form {
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  width: 350px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.login-form:hover {
+  transform: translateY(-5px);
+}
+
+.login-form h2 {
+  margin-bottom: 25px;
+  color: #007bff;
+}
+
+.login-form input,
+.game-row input,
+.over-under-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.login-form button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-form button:hover {
+  background: #0056b3;
+}
+
+.error {
+  color: #e74c3c;
+  margin-bottom: 10px;
+}
+
+/* ==============================DASHBOARD / SLIPS============================== */
+.dashboard-container {
+  margin-top: 20px;
+}
+
+.slip {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.slip:hover {
+  transform: translateY(-2px);
+}
+
+.slip.premium {
+  border-color: gold;
+  background: #fffbe6;
+}
+
+.slip.free.active {
+  border-color: #00bfff;
+  background: #e6f7ff;
+}
+
+.slip.free.expired {
+  border-color: #888;
+  background: #f5f5f5;
+  opacity: 0.7;
+}
+
+/* ==============================SLIP HEADER & BADGES============================== */
+.slip-date {
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+/* Badges */
+.premium-badge,
+.free-badge,
+.vip-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.free-badge.expired-badge {
+  background-color: #6c757d;
+}
+
+.premium-badge {
+  background-color: #ffd700;
+  color: #000;
+}
+
+.free-badge {
+  background-color: #00bfff;
+  color: #fff;
+}
+
+.vip-badge {
+  background-color: purple;
+  color: #fff;
+}
+
+/* ==============================LOCKED PREMIUM SLIP============================== */
+.locked-slip {
+  opacity: 0.5;
+  pointer-events: none;
+  position: relative;
+  border: 2px dashed #dc3545;
+  border-radius: 10px;
+  padding: 15px;
+  background: #fff0f0;
+}
+
+.locked-slip::before {
+  content: "🔒 Locked";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #dc3545;
+  font-weight: bold;
+  background: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* ==============================TEAM / ODDS============================== */
+.team.home {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.team.away {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.odd {
+  color: #28a745;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.game-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+/* ==============================OVER/UNDER STYLING============================== */
+.over-under-text {
+  font-weight: bold;
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #fff;
+  text-align: center;
+}
+
+.over-under-text.over {
+  background-color: #28a745;
+}
+
+.over-under-text.under {
+  background-color: #dc3545;
+}
+
+.over-under-text.neutral {
+  background-color: #6c757d;
+}
+
+/* ==============================ADMIN TABLE============================== */
+.admin-logged-users {
+  margin-top: 25px;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.users-table th,
+.users-table td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.users-table th {
+  background: #007bff;
+  color: #fff;
+}
+
+.premium-user-glow {
+  box-shadow: 0 0 12px 3px gold;
+  border-color: gold;
+  background: #fffbe6;
+}
+
+/* ==============================ADMIN SLIP BUILDER============================== */
+.admin-slip-builder {
+  margin: 25px 0;
+  padding: 20px;
+  border: 1px solid #007bff;
+  border-radius: 12px;
+  background: #f1f8ff;
+}
+
+.admin-slip-builder h3 {
+  margin-bottom: 15px;
+  color: #007bff;
+}
+
+.admin-slip-builder input[type="date"] {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 200px;
+}
+
+.admin-slip-builder label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+/* ==============================CREATE / ADD SLIP BADGES============================== */
+.badge-button {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-right: 10px;
+  color: #fff;
+  text-align: center;
+}
+
+.badge-button.create-slip {
+  background-color: #28a745;
+}
+
+.badge-button.create-slip:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.badge-button.add-slip {
+  background-color: #007bff;
+}
+
+.badge-button.add-slip:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+/* ==============================GAME ROW INPUTS============================== */
+.game-row input.over-under-input {
+  width: 120px;
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  padding: 6px;
+  font-weight: bold;
+  text-align: center;
+  transition: border 0.3s ease;
+}
+
+.game-row input.over-under-input:focus {
+  border-color: #28a745;
+  outline: none;
+  box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+}
+
+/* ==============================MESSAGES============================== */
+.message {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+/* ==============================LOGOUT BUTTON============================== */
+.logout-btn {
+  padding: 8px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #c82333;
+}
+
+/* ==============================SUBSCRIPTION BUTTONS============================== */
+.subscription-container {
+  margin: 20px 0;
+}
+
+.subscription-container h3 {
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.subscription-container ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.subscription-container li {
+  background: #f1f1f1;
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.subscription-container li:hover {
+  transform: translateY(-3px);
+  background: #e0e0e0;
+}
+
+.subscription-container li button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.3s ease;
+}
+
+.subscription-container li button.weekly {
+  background-color: #28a745;
+}
+
+.subscription-container li button.weekly:hover {
+  background-color: #218838;
+}
+
+.subscription-container li button.monthly {
+  background-color: #007bff;
+}
+
+.subscription-container li button.monthly:hover {
+  background-color: #0056b3;
+}
+
+.subscription-container li button.vip {
+  background-color: purple;
+}
+
+.subscription-container li button.vip:hover {
+  background-color: #4b0082;
+}
+
+/* ==============================TOTAL ODDS============================== */
+.total-odds {
+  font-weight: bold;
+  margin-top: 10px;
+  text-align: right;
+  color: #28a745;
+}
+
+/* ==============================MOBILE RESPONSIVE BADGES============================== */
+@media (max-width: 600px) {
+  .slip-date {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.9rem;
+  }
+
+  .premium-badge,
+  .free-badge,
+  .vip-badge {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}
+
+/* ==============================FULL MOBILE RESPONSIVE============================== */
+@media (max-width: 768px) {
+  .slip {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .slip-date {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    gap: 4px;
+  }
+
+  .premium-badge, .free-badge, .vip-badge {
+    margin-left: 0;
+    margin-top: 3px;
+  }
+
+  .game-row {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .game-row span,
+  .game-row input,
+  .game-row select {
+    flex: 1 1 100%;
+    margin-bottom: 5px;
+  }
+
+  .over-under-text {
+    margin-left: 0;
+    text-align: center;
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  .total-odds {
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .badge-controls {
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .admin-slip-builder {
+    padding: 15px;
+  }
+
+  .admin-slip-builder .game-row input {
+    flex: 1 1 100%;
+    margin-bottom: 8px;
+  }
+
+  .admin-slip-builder input[type="date"] {
+    width: 100%;
+  }
+
+  .subscription-container ul {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .top-bar .welcome {
+    font-size: 0.9rem;
+  }
+} 
