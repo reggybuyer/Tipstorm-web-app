@@ -14,13 +14,15 @@ export default function AdminSlipBuilder() {
   };
 
   // Add/remove game rows
-  const addGameRow = () => setGames([...games, { home: "", away: "", odd: "", overUnder: "" }]);
-  const removeGameRow = (index) => setGames(games.filter((_, i) => i !== index));
+  const addGameRow = () =>
+    setGames([...games, { home: "", away: "", odd: "", overUnder: "" }]);
+  const removeGameRow = (index) =>
+    setGames(games.filter((_, i) => i !== index));
 
   // Submit slip to backend
   const handleSubmit = async () => {
     try {
-      // Validate odds
+      // Validate games
       for (let g of games) {
         if (!g.home || !g.away || !g.odd) {
           setMessage("All game fields except Over/Under are required.");
@@ -30,17 +32,17 @@ export default function AdminSlipBuilder() {
 
       const slip = {
         date: new Date().toISOString().split("T")[0],
-        games: games.map(g => ({
+        games: games.map((g) => ({
           home: g.home,
           away: g.away,
           odd: parseFloat(g.odd),
-          overUnder: g.overUnder || "" // keep empty if not filled
+          overUnder: g.overUnder || "",
         })),
-        premium: true
+        premium: true,
       };
 
-      const adminEmail = "admin@test.com"; // replace with dynamic if needed
-      await axios.post("http://localhost:5000/slip", { adminEmail, slip });
+      const adminEmail = "admin@test.com"; // replace if needed
+      await axios.post("http://localhost:5000/add-slip", { adminEmail, slip });
 
       setMessage("Slip added successfully!");
       setGames([{ home: "", away: "", odd: "", overUnder: "" }]);
@@ -82,13 +84,19 @@ export default function AdminSlipBuilder() {
             value={game.overUnder}
             onChange={(e) => handleChange(index, "overUnder", e.target.value)}
           />
-          <button type="button" onClick={() => removeGameRow(index)}>Remove</button>
+          <button type="button" onClick={() => removeGameRow(index)}>
+            Remove
+          </button>
         </div>
       ))}
 
       <div style={{ marginTop: "10px" }}>
-        <button type="button" onClick={addGameRow}>Add Game</button>
-        <button type="button" onClick={handleSubmit} style={{ marginLeft: "10px" }}>Submit Slip</button>
+        <button type="button" onClick={addGameRow}>
+          Add Game
+        </button>
+        <button type="button" onClick={handleSubmit} style={{ marginLeft: "10px" }}>
+          Submit Slip
+        </button>
       </div>
     </div>
   );
