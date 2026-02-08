@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://tipstorm-web-app.onrender.com";
-
 export default function Register() {
+  const BACKEND_URL = "https://tipstorm-web-app.onrender.com";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -27,9 +26,9 @@ export default function Register() {
     }
 
     try {
-      const res = await axios.post(`${API_URL}/register`, {
+      const res = await axios.post(`${BACKEND_URL}/register`, {
         email,
-        password,
+        password
       });
 
       if (res.data.success) {
@@ -45,33 +44,27 @@ export default function Register() {
     <div className="login-container">
       <div className="login-form">
         <h2>Register</h2>
-
         {error && <div className="error">{error}</div>}
         {success && <div className="message">{success}</div>}
-
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
         />
-
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
         />
-
         <input
           type="password"
           placeholder="Confirm Password"
           value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
+          onChange={e => setConfirm(e.target.value)}
         />
-
         <button onClick={handleRegister}>Register</button>
-
         <p style={{ marginTop: "10px" }}>
           Already have an account?{" "}
           <span
