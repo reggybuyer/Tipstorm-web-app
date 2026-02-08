@@ -30,5 +30,23 @@
     "approved": true,
     "plan": "weekly",
     "expiresAt": "2026-02-10T09:56:54.732Z"
+  },
+  "testuser@tipstorm.com": {
+    "password": "$2b$10$3q6F.xU5gTwOZ7B8HbS/1uF0uNax4cA5OQyZx2ejXSm8qGzFhPqQO",
+    "role": "user",
+    "active": true,
+    "premium": false,
+    "approved": true,
+    "plan": "none",
+    "expiresAt": null
+  },
+  "user@test.com": {
+    "password": "$2b$10$izRybtiwz3OxktitXqZmU.Ro2YjP7df..H6lwP3II2vaB/GfR.QoW",
+    "role": "user",
+    "active": true,
+    "premium": false,
+    "approved": false,
+    "plan": null,
+    "expiresAt": null
   }
 }

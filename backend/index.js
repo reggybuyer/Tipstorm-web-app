@@ -57,6 +57,7 @@ app.use((req, res, next) => { checkExpiry(); next(); });
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = users[email];
+
   if (!user) return res.status(401).json({ message: "Invalid login" });
 
   const match = bcrypt.compareSync(password, user.password);
@@ -67,9 +68,9 @@ app.post("/login", (req, res) => {
     user: {
       email,
       role: user.role,
-      premium: user.premium || false,
-      approved: user.approved || false,
-      plan: user.plan || null,
+      premium: user.role === "admin" ? true : user.premium || false,
+      approved: user.role === "admin" ? true : user.approved || false,
+      plan: user.role === "admin" ? "admin" : user.plan || null,
     },
   });
 });

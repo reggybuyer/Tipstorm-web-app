@@ -12,7 +12,9 @@ export default function App() {
     if (user) {
       const fetchGames = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/games/${user.email}`);
+          const res = await fetch(
+            `https://tipstorm-web-app.onrender.com/games/${user.email}`
+          );
           const data = await res.json();
           setGames(data);
         } catch (err) {
@@ -29,8 +31,10 @@ export default function App() {
     <div className="container">
       <h1>TipStorm</h1>
       <p>Welcome {user.role === "admin" ? "Admin" : "User"}</p>
+
       {user.role === "admin" && <AdminSlipBuilder />}
+
       <Dashboard games={games} user={user} />
     </div>
   );
-}
+} 
