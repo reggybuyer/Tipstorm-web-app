@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "../styles.css";
 
+const API_URL = "https://tipstorm-web-app.onrender.com";
+
 export default function Login({ setUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -12,8 +14,12 @@ export default function Login({ setUser }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
-      const res = await axios.post("http://localhost:5000/login", { email, password });
+      const res = await axios.post(`${API_URL}/login`, {
+        email,
+        password,
+      });
 
       if (res.data.success) {
         setUser(res.data.user);
@@ -30,12 +36,16 @@ export default function Login({ setUser }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
-      const res = await axios.post("http://localhost:5000/register", { email, password });
+      const res = await axios.post(`${API_URL}/register`, {
+        email,
+        password,
+      });
 
       if (res.data.success) {
         alert("Registration successful! You can now log in.");
-        setIsRegister(false); // Switch to login after successful registration
+        setIsRegister(false);
         setEmail("");
         setPassword("");
       } else {
@@ -49,9 +59,14 @@ export default function Login({ setUser }) {
 
   return (
     <div className="login-container">
-      <form className="login-form" onSubmit={isRegister ? handleRegister : handleLogin}>
+      <form
+        className="login-form"
+        onSubmit={isRegister ? handleRegister : handleLogin}
+      >
         <h2>{isRegister ? "Register" : "TipStorm Login"}</h2>
+
         {error && <p className="error">{error}</p>}
+
         <input
           type="email"
           placeholder="Email"
@@ -59,6 +74,7 @@ export default function Login({ setUser }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -66,7 +82,10 @@ export default function Login({ setUser }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">{isRegister ? "Register" : "Login"}</button>
+
+        <button type="submit">
+          {isRegister ? "Register" : "Login"}
+        </button>
 
         <p style={{ fontSize: "0.8rem", marginTop: "10px" }}>
           {isRegister ? (
@@ -74,7 +93,10 @@ export default function Login({ setUser }) {
               Already have an account?{" "}
               <span
                 style={{ color: "#007bff", cursor: "pointer" }}
-                onClick={() => { setIsRegister(false); setError(""); }}
+                onClick={() => {
+                  setIsRegister(false);
+                  setError("");
+                }}
               >
                 Login
               </span>
@@ -84,7 +106,10 @@ export default function Login({ setUser }) {
               New user?{" "}
               <span
                 style={{ color: "#007bff", cursor: "pointer" }}
-                onClick={() => { setIsRegister(true); setError(""); }}
+                onClick={() => {
+                  setIsRegister(true);
+                  setError("");
+                }}
               >
                 Register
               </span>
