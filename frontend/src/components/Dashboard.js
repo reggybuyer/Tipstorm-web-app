@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "../styles.css";
 import axios from "axios";
 
 export default function Dashboard({ games, user }) {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const [allUsers, setAllUsers] = useState([]);
   const [localGames, setLocalGames] = useState([]);
   const [currentUser, setCurrentUser] = useState(user);
@@ -11,7 +12,7 @@ export default function Dashboard({ games, user }) {
     date: "",
     premium: false,
     vip: false,
-    games: [{ home: "", away: "", odd: "", overUnder: "" }]
+    games: [{ home: "", away: "", odd: "", overUnder: "" }],
   });
   const [paymentMessage, setPaymentMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
@@ -19,15 +20,19 @@ export default function Dashboard({ games, user }) {
   const subscriptions = {
     weekly: { price: 500 },
     monthly: { price: 1500 },
-    vip: { price: 3000 }
+    vip: { price: 3000 },
   };
 
+  const emailRef = useRef();
+  const passwordRef = useRef();
+
+  // Calculate total odds
   const calculateTotalOdds = (gamesArray) => {
     const total = gamesArray.reduce((t, g) => t * parseFloat(g.odd || 1), 1);
     return total < 2 ? 2.0 : total.toFixed(2);
   };
 
-  // Load games
+  // Load initial games
   useEffect(() => {
     if (Array.isArray(games)) {
       const updated = games.map((s) => ({ ...s, total: calculateTotalOdds(s.games) }));
@@ -35,7 +40,7 @@ export default function Dashboard({ games, user }) {
     }
   }, [games]);
 
-  // Payment popup
+  // Payment popup for non-premium users
   useEffect(() => {
     if (!currentUser.premium) {
       setPaymentMessage(
@@ -45,17 +50,17 @@ export default function Dashboard({ games, user }) {
     }
   }, [currentUser]);
 
-  // ===== FIXED admin users fetch =====
+  // Fetch all users (admin)
   const fetchAllUsers = async () => {
-    if (currentUser.role !== "admin") return;
     try {
       const res = await axios.get(`${BACKEND_URL}/all-users/${currentUser.email}`);
       if (res.data.success) setAllUsers(res.data.users);
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      console.error(err);
     }
   };
 
+  // Refresh slips for current user
   const refreshUser = async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/games/${currentUser.email}`);
@@ -68,21 +73,30 @@ export default function Dashboard({ games, user }) {
     }
   };
 
+  // Set up intervals
   useEffect(() => {
-    fetchAllUsers();
-    const usersInterval = setInterval(fetchAllUsers, 5000);
-    const gamesInterval = setInterval(refreshUser, 10000);
+    let userInterval, adminInterval;
+
+    if (currentUser.role === "admin") {
+      fetchAllUsers();
+      adminInterval = setInterval(fetchAllUsers, 5000);
+    }
+
+    userInterval = setInterval(refreshUser, 10000);
+
     return () => {
-      clearInterval(usersInterval);
-      clearInterval(gamesInterval);
+      clearInterval(userInterval);
+      if (adminInterval) clearInterval(adminInterval);
     };
   }, [currentUser]);
 
+  // Logout
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = "/login";
   };
 
+  // Update game results/overUnder
   const updateGame = async (slipIndex, gameIndex, field, value) => {
     const updated = [...localGames];
     if (field === "status") updated[slipIndex].games[gameIndex].result = value.toLowerCase();
@@ -96,7 +110,7 @@ export default function Dashboard({ games, user }) {
           slipIndex,
           gameIndex,
           result: field === "status" ? value : undefined,
-          overUnder: field === "overUnder" ? value : undefined
+          overUnder: field === "overUnder" ? value : undefined,
         });
       } catch (err) {
         console.error("Failed to update game:", err);
@@ -104,11 +118,13 @@ export default function Dashboard({ games, user }) {
     }
   };
 
+  // Approve user
   const approveUser = async (email) => {
     await axios.post(`${BACKEND_URL}/approve-user`, { adminEmail: currentUser.email, userEmail: email });
     fetchAllUsers();
   };
 
+  // Activate user
   const activateUser = async (email, plan) => {
     try {
       await axios.post(`${BACKEND_URL}/activate`, { adminEmail: currentUser.email, userEmail: email, plan });
@@ -120,6 +136,7 @@ export default function Dashboard({ games, user }) {
     }
   };
 
+  // Subscribe payment popup
   const handleSubscribe = (type) => {
     const price = subscriptions[type].price;
     setPaymentMessage(
@@ -130,6 +147,7 @@ export default function Dashboard({ games, user }) {
 
   const closePopup = () => setShowPopup(false);
 
+  // Check if slip is locked
   const isLocked = (slip) => {
     if (currentUser.role === "admin") return false;
     if (slip.free) return false;
@@ -138,6 +156,7 @@ export default function Dashboard({ games, user }) {
     return false;
   };
 
+  // Update slip badge/type
   const updateSlipType = async (slipIndex, type) => {
     const updated = [...localGames];
     updated[slipIndex].free = type === "free";
@@ -151,18 +170,25 @@ export default function Dashboard({ games, user }) {
     }
   };
 
-  const addGameRow = () => setNewSlip({ ...newSlip, games: [...newSlip.games, { home: "", away: "", odd: "", overUnder: "" }] });
+  // Add new game row for slip creation
+  const addGameRow = () =>
+    setNewSlip({ ...newSlip, games: [...newSlip.games, { home: "", away: "", odd: "", overUnder: "" }] });
+
+  // Update new slip game
   const updateNewGame = (i, field, value) => {
     const games = [...newSlip.games];
     games[i][field] = value;
     setNewSlip({ ...newSlip, games });
   };
+
+  // Save new slip
   const saveSlip = async () => {
     if (!newSlip.date) return alert("Select slip date");
     for (const g of newSlip.games) if (!g.home || !g.away || !g.odd) return alert("Fill all game fields");
     const slipToSave = { ...newSlip };
     slipToSave.total = calculateTotalOdds(slipToSave.games);
     slipToSave.free = !slipToSave.premium && !slipToSave.vip;
+
     try {
       await axios.post(`${BACKEND_URL}/add-slip`, { adminEmail: currentUser.email, slip: slipToSave });
       alert("Slip added successfully");
@@ -174,6 +200,28 @@ export default function Dashboard({ games, user }) {
   };
 
   const newSlipTotal = calculateTotalOdds(newSlip.games);
+
+  // ===== REGISTER NEW USER =====
+  const handleRegister = async () => {
+    const email = emailRef.current.value.trim();
+    const password = passwordRef.current.value.trim();
+    if (!email || !password) return alert("Enter email and password");
+
+    try {
+      const res = await axios.post(`${BACKEND_URL}/register`, { email, password });
+      if (res.data.success) {
+        alert(res.data.message);
+        emailRef.current.value = "";
+        passwordRef.current.value = "";
+        fetchAllUsers();
+      } else {
+        alert(res.data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Registration failed");
+    }
+  };
 
   return (
     <div className="dashboard-container">
@@ -196,7 +244,7 @@ export default function Dashboard({ games, user }) {
         </ul>
       </div>
 
-      {/* Payment Popup */}
+      {/* Payment popup */}
       {showPopup && paymentMessage && (
         <div className="popup-overlay">
           <div className="popup-content">
@@ -212,8 +260,12 @@ export default function Dashboard({ games, user }) {
         <div className="admin-slip-builder">
           <h3>Create New Slip</h3>
           <input type="date" value={newSlip.date} onChange={e => setNewSlip({ ...newSlip, date: e.target.value })} />
-          <label><input type="checkbox" checked={newSlip.premium} onChange={e => setNewSlip({ ...newSlip, premium: e.target.checked })} /> Premium</label>
-          <label><input type="checkbox" checked={newSlip.vip} onChange={e => setNewSlip({ ...newSlip, vip: e.target.checked, premium: true })} /> VIP</label>
+          <label>
+            <input type="checkbox" checked={newSlip.premium} onChange={e => setNewSlip({ ...newSlip, premium: e.target.checked })} /> Premium
+          </label>
+          <label>
+            <input type="checkbox" checked={newSlip.vip} onChange={e => setNewSlip({ ...newSlip, vip: e.target.checked, premium: true })} /> VIP
+          </label>
           {newSlip.games.map((g, i) => (
             <div key={i} className="game-row">
               <input placeholder="Home" value={g.home} onChange={e => updateNewGame(i, "home", e.target.value)} />
@@ -237,27 +289,31 @@ export default function Dashboard({ games, user }) {
             {!slip.vip && slip.premium && <span className={`premium-badge ${isLocked(slip) ? "locked-badge" : ""}`}>Premium</span>}
             {slip.free && <span className="free-badge">Free</span>}
           </div>
-          {isLocked(slip) ? <div className="locked-slip">🔒 Locked content</div> : slip.games.map((g, i) => (
-            <div key={i} className="game-row">
-              <span className="team home">{g.home}</span> vs <span className="team away">{g.away}</span>
-              <span className="odd">{g.odd}</span>
-              {currentUser.role === "admin" ? (
-                <>
-                  <input placeholder="Over / Under" value={g.overUnder || ""} onChange={e => updateGame(si, i, "overUnder", e.target.value)} />
-                  <select value={g.result || "Pending"} onChange={e => updateGame(si, i, "status", e.target.value)}>
-                    <option value="Pending">Pending</option>
-                    <option value="Won">Won</option>
-                    <option value="Lost">Lost</option>
-                  </select>
-                </>
-              ) : (
-                <>
-                  {g.overUnder && <span className={`over-under-text ${g.overUnder.toLowerCase() === "over" ? "over" : "under"}`}>{g.overUnder}</span>}
-                  <span className={`over-under-text ${g.result?.toLowerCase() === "won" ? "over" : g.result?.toLowerCase() === "lost" ? "under" : "neutral"}`}>{g.result || "Pending"}</span>
-                </>
-              )}
-            </div>
-          ))}
+          {isLocked(slip) ? (
+            <div className="locked-slip">🔒 Locked content</div>
+          ) : (
+            slip.games.map((g, i) => (
+              <div key={i} className="game-row">
+                <span className="team home">{g.home}</span> vs <span className="team away">{g.away}</span>
+                <span className="odd">{g.odd}</span>
+                {currentUser.role === "admin" ? (
+                  <>
+                    <input placeholder="Over / Under" value={g.overUnder || ""} onChange={e => updateGame(si, i, "overUnder", e.target.value)} />
+                    <select value={g.result || "Pending"} onChange={e => updateGame(si, i, "status", e.target.value)}>
+                      <option value="Pending">Pending</option>
+                      <option value="Won">Won</option>
+                      <option value="Lost">Lost</option>
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    {g.overUnder && <span className={`over-under-text ${g.overUnder.toLowerCase() === "over" ? "over" : "under"}`}>{g.overUnder}</span>}
+                    <span className={`over-under-text ${g.result?.toLowerCase() === "won" ? "over" : g.result?.toLowerCase() === "lost" ? "under" : "neutral"}`}>{g.result || "Pending"}</span>
+                  </>
+                )}
+              </div>
+            ))
+          )}
           {!isLocked(slip) && <div className="total-odds">Total Odds: {slip.total}</div>}
           {currentUser.role === "admin" && (
             <div className="badge-controls" style={{ marginTop: "10px" }}>
@@ -270,33 +326,42 @@ export default function Dashboard({ games, user }) {
         </div>
       ))}
 
-      {/* Admin users table */}
+      {/* Admin: Register and users table */}
       {currentUser.role === "admin" && (
-        <div className="admin-logged-users">
-          <h3>Users</h3>
-          <table className="users-table">
-            <thead>
-              <tr><th>Email</th><th>Plan</th><th>Approved</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              {allUsers.map((u, i) => (
-                <tr key={i} className={u.premium && !u.approved ? "premium-user-glow" : ""}>
-                  <td>{u.email}</td>
-                  <td>{u.plan ? u.plan.toUpperCase() : "None"} {u.expiresAt ? `(expires ${new Date(u.expiresAt).toLocaleDateString()})` : ""}</td>
-                  <td>{u.approved ? "Yes" : "No"}</td>
-                  <td>
-                    {!u.premium ? (
-                      <select onChange={e => activateUser(u.email, e.target.value)} defaultValue="">
-                        <option value="" disabled>Select Plan</option>
-                        {Object.keys(subscriptions).map(p => (<option key={p} value={p}>{p.toUpperCase()}</option>))}
-                      </select>
-                    ) : (!u.approved && <button onClick={() => approveUser(u.email)}>Approve</button>)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="admin-register-user">
+            <h3>Register New User</h3>
+            <input type="email" placeholder="Email" ref={emailRef} />
+            <input type="password" placeholder="Password" ref={passwordRef} />
+            <button onClick={handleRegister}>Register</button>
+          </div>
+
+          <div className="admin-logged-users">
+            <h3>Users</h3>
+            <table className="users-table">
+              <thead>
+                <tr><th>Email</th><th>Plan</th><th>Approved</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                {allUsers.map((u, i) => (
+                  <tr key={i} className={u.premium && !u.approved ? "premium-user-glow" : ""}>
+                    <td>{u.email}</td>
+                    <td>{u.plan ? u.plan.toUpperCase() : "None"} {u.expiresAt ? `(expires ${new Date(u.expiresAt).toLocaleDateString()})` : ""}</td>
+                    <td>{u.approved ? "Yes" : "No"}</td>
+                    <td>
+                      {!u.premium ? (
+                        <select onChange={e => activateUser(u.email, e.target.value)} defaultValue="">
+                          <option value="" disabled>Select Plan</option>
+                          {Object.keys(subscriptions).map(p => (<option key={p} value={p}>{p.toUpperCase()}</option>))}
+                        </select>
+                      ) : (!u.approved && <button onClick={() => approveUser(u.email)}>Approve</button>)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
