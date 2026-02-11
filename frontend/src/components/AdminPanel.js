@@ -15,7 +15,11 @@ export default function AdminPanel({ adminEmail }) {
     if (!adminEmail) return;
     try {
       const res = await axios.get(`${backendUrl}/all-users/${adminEmail}`);
-      if (res.data.success) setUsers(res.data.users);
+      if (res.data.success) {
+        // Sort users by role first
+        const sorted = res.data.users.sort((a, b) => a.role === "admin" ? -1 : 1);
+        setUsers(sorted);
+      }
     } catch (err) {
       setMessage("Failed to fetch users");
       console.error(err);
@@ -24,8 +28,7 @@ export default function AdminPanel({ adminEmail }) {
 
   useEffect(() => {
     fetchUsers();
-    // Poll every 15 seconds to auto-update users
-    const interval = setInterval(fetchUsers, 15000);
+    const interval = setInterval(fetchUsers, 15000); // auto-refresh
     return () => clearInterval(interval);
   }, [adminEmail]);
 
@@ -57,10 +60,12 @@ export default function AdminPanel({ adminEmail }) {
     setLoading(false);
   };
 
+  // Render plan badges
   const renderPlanBadge = (plan) => {
-    if (plan === "vip") return <span className="vip-badge">VIP</span>;
-    if (plan === "monthly") return <span className="premium-badge">Monthly</span>;
+    if (!plan || plan === "none") return <span className="free-badge">None</span>;
     if (plan === "weekly") return <span className="free-badge">Weekly</span>;
+    if (plan === "monthly") return <span className="premium-badge">Monthly</span>;
+    if (plan === "vip") return <span className="vip-badge">VIP</span>;
     return <span className="free-badge">None</span>;
   };
 
@@ -90,7 +95,7 @@ export default function AdminPanel({ adminEmail }) {
           {users.length === 0 ? (
             <tr><td colSpan={7}>No users found</td></tr>
           ) : (
-            users.map((u) => (
+            users.map(u => (
               <tr key={u.email}>
                 <td>{u.email}</td>
                 <td>{u.role}</td>
