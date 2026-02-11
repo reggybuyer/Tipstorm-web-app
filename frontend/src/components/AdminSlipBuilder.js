@@ -8,17 +8,17 @@ export default function AdminSlipBuilder({ adminEmail }) {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Replace with your deployed backend URL
+  // Replace with your actual deployed backend URL
   const backendUrl = "https://your-tipstorm-backend.onrender.com";
 
-  // Fetch admin info from backend on mount
+  // Fetch admin info on mount
   useEffect(() => {
     const fetchAdmin = async () => {
       try {
         if (!adminEmail) return;
-        const response = await axios.get(`${backendUrl}/all-users/${adminEmail}`);
-        const admin = response.data.users.find((u) => u.email === adminEmail && u.role === "admin");
-        if (!admin) {
+        const response = await axios.get(`${backendUrl}/users/${adminEmail}`);
+        const admin = response.data.user;
+        if (!admin || admin.role !== "admin") {
           setMessage("Admin not found or unauthorized.");
         } else {
           setUser(admin);
@@ -31,7 +31,7 @@ export default function AdminSlipBuilder({ adminEmail }) {
     fetchAdmin();
   }, [adminEmail]);
 
-  // Update a field in a game row
+  // Handle input change
   const handleChange = (index, field, value) => {
     const newGames = [...games];
     newGames[index][field] = value;
@@ -39,7 +39,8 @@ export default function AdminSlipBuilder({ adminEmail }) {
   };
 
   // Add new game row
-  const addGameRow = () => setGames([...games, { home: "", away: "", odd: "", overUnder: "" }]);
+  const addGameRow = () =>
+    setGames([...games, { home: "", away: "", odd: "", overUnder: "" }]);
 
   // Remove a game row
   const removeGameRow = (index) => setGames(games.filter((_, i) => i !== index));
@@ -51,10 +52,9 @@ export default function AdminSlipBuilder({ adminEmail }) {
       setMessage("Unauthorized. Admin not loaded.");
       return;
     }
-
     setLoading(true);
 
-    // Validation
+    // Validate fields
     for (let g of games) {
       if (!g.home || !g.away || !g.odd) {
         setMessage("All fields except Over/Under are required.");

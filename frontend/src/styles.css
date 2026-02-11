@@ -19,6 +19,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 90vh;
+  background: #f5f7fa;
 }
 
 .login-form {
@@ -26,9 +27,9 @@ body {
   padding: 40px;
   border-radius: 12px;
   width: 350px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   text-align: center;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 .login-form:hover {
@@ -48,7 +49,6 @@ body {
   margin-bottom: 15px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  box-sizing: border-box;
 }
 
 .login-form button {
@@ -60,7 +60,7 @@ body {
   color: #fff;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .login-form button:hover {
@@ -83,8 +83,8 @@ body {
   border-radius: 10px;
   margin-bottom: 15px;
   background: #fff;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .slip:hover {
@@ -129,6 +129,10 @@ body {
   white-space: nowrap;
 }
 
+.free-badge.expired-badge {
+  background-color: #6c757d;
+}
+
 .premium-badge {
   background-color: #ffd700;
   color: #000;
@@ -137,10 +141,6 @@ body {
 .free-badge {
   background-color: #00bfff;
   color: #fff;
-}
-
-.free-badge.expired-badge {
-  background-color: #6c757d;
 }
 
 .vip-badge {
@@ -162,8 +162,8 @@ body {
 .locked-slip::before {
   content: "🔒 Locked";
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 10px;
+  right: 10px;
   color: #dc3545;
   font-weight: bold;
   background: #fff;
@@ -194,7 +194,6 @@ body {
   gap: 10px;
   margin-bottom: 12px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 /* ==============================OVER/UNDER STYLING============================== */
@@ -268,7 +267,6 @@ body {
   border-radius: 6px;
   border: 1px solid #ccc;
   width: 200px;
-  box-sizing: border-box;
 }
 
 .admin-slip-builder label {
@@ -286,7 +284,7 @@ body {
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
   margin-right: 10px;
   color: #fff;
   text-align: center;
@@ -318,7 +316,7 @@ body {
   padding: 6px;
   font-weight: bold;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: border 0.3s ease;
 }
 
 .game-row input.over-under-input:focus {
@@ -343,7 +341,7 @@ body {
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .logout-btn:hover {
@@ -375,7 +373,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, background 0.3s ease;
 }
 
 .subscription-container li:hover {
@@ -390,7 +388,7 @@ body {
   font-weight: bold;
   cursor: pointer;
   color: #fff;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .subscription-container li button.weekly {
@@ -425,83 +423,97 @@ body {
   color: #28a745;
 }
 
-/* ==============================MOBILE RESPONSIVE============================== */
-@media (max-width: 768px) {
-  .slip {
-    padding: 12px;
-    margin-bottom: 15px;
-  }
-  .slip-date {
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 0.9rem;
-    gap: 4px;
-  }
-  .premium-badge,
-  .free-badge,
-  .vip-badge {
-    margin-left: 0;
-    margin-top: 3px;
-  }
-  .game-row {
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-  .game-row span,
-  .game-row input,
-  .game-row select {
-    flex: 1 1 100%;
-    margin-bottom: 5px;
-  }
-  .over-under-text {
-    margin-left: 0;
-    text-align: center;
-    width: 100%;
-    margin-top: 5px;
-  }
-  .total-odds {
-    text-align: center;
-    margin-top: 8px;
-  }
-  .badge-controls {
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 8px;
-  }
-  .admin-slip-builder {
-    padding: 15px;
-  }
-  .admin-slip-builder .game-row input {
-    flex: 1 1 100%;
-    margin-bottom: 8px;
-  }
-  .admin-slip-builder input[type="date"] {
-    width: 100%;
-  }
-  .subscription-container ul {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .top-bar {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .top-bar .welcome {
-    font-size: 0.9rem;
-  }
-}
-
+/* ==============================MOBILE RESPONSIVE BADGES============================== */
 @media (max-width: 600px) {
   .slip-date {
     flex-direction: column;
     align-items: flex-start;
     font-size: 0.9rem;
   }
+
   .premium-badge,
   .free-badge,
   .vip-badge {
     margin-left: 0;
     margin-top: 4px;
   }
+}
+
+/* ==============================FULL MOBILE RESPONSIVE============================== */
+@media (max-width: 768px) {
+  .slip {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .slip-date {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    gap: 4px;
+  }
+
+  .premium-badge, .free-badge, .vip-badge {
+    margin-left: 0;
+    margin-top: 3px;
+  }
+
+  .game-row {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .game-row span,
+  .game-row input,
+  .game-row select {
+    flex: 1 1 100%;
+    margin-bottom: 5px;
+  }
+
+  .over-under-text {
+    margin-left: 0;
+    text-align: center;
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  .total-odds {
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .badge-controls {
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .admin-slip-builder {
+    padding: 15px;
+  }
+
+  .admin-slip-builder .game-row input {
+    flex: 1 1 100%;
+    margin-bottom: 8px;
+  }
+
+  .admin-slip-builder input[type="date"] {
+    width: 100%;
+  }
+
+  .subscription-container ul {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .top-bar .welcome {
+    font-size: 0.9rem;
+  }
 } 
+
