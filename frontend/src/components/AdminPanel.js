@@ -8,7 +8,7 @@ export default function AdminPanel({ adminEmail }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const backendUrl = "https://your-tipstorm-backend.onrender.com";
+  const backendUrl = "https://tipstorm-web-app.onrender.com";
 
   // Fetch all users
   const fetchUsers = async () => {

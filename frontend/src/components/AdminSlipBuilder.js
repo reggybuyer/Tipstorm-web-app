@@ -6,7 +6,7 @@ export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const backendUrl = "https://your-tipstorm-backend.onrender.com";
+  const backendUrl = "https://tipstorm-web-app.onrender.com";
 
   const handleChange = (index, field, value) => {
     const newGames = [...games];
