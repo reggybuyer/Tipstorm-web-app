@@ -4,12 +4,12 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const path = require("path");
-
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const USERS_FILE = path.join(__dirname, "users.json");
 const SLIPS_FILE = path.join(__dirname, "slips.json");
 
@@ -20,7 +20,6 @@ if (fs.existsSync(USERS_FILE)) {
     let updated = false;
     Object.keys(users).forEach(email => {
         if (!users[email].password.startsWith("$2")) {
-            // Hash plain passwords
             users[email].password = bcrypt.hashSync(users[email].password, 10);
             updated = true;
         }
@@ -35,18 +34,9 @@ if (fs.existsSync(SLIPS_FILE)) {
 }
 
 // ===== Helper functions =====
-function saveUsers() {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-function saveSlips() {
-    fs.writeFileSync(SLIPS_FILE, JSON.stringify(slips, null, 2));
-}
-
-function totalOdds(games) {
-    return games.reduce((t, g) => t * Number(g.odd), 1).toFixed(2);
-}
-
+function saveUsers() { fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2)); }
+function saveSlips() { fs.writeFileSync(SLIPS_FILE, JSON.stringify(slips, null, 2)); }
+function totalOdds(games) { return games.reduce((t, g) => t * Number(g.odd), 1).toFixed(2); }
 function checkExpiry() {
     const now = new Date();
     Object.values(users).forEach(u => {
@@ -60,18 +50,13 @@ function checkExpiry() {
 }
 
 // Middleware to check expiry
-app.use((req, res, next) => {
-    checkExpiry();
-    next();
-});
+app.use((req, res, next) => { checkExpiry(); next(); });
 
 // ===== LOGIN =====
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
     const user = users[email];
-
     if (!user) return res.status(401).json({ success: false, message: "Invalid login" });
-
     const match = bcrypt.compareSync(password, user.password);
     if (!match) return res.status(401).json({ success: false, message: "Invalid login" });
 
@@ -90,13 +75,11 @@ app.post("/login", (req, res) => {
 // ===== REGISTER =====
 app.post("/register", (req, res) => {
     const { email, password } = req.body;
-
     if (!email || !password) return res.status(400).json({ success: false, message: "Email and password required" });
     if (users[email]) return res.status(400).json({ success: false, message: "User already exists" });
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
     users[email] = {
-        password: hashedPassword,
+        password: bcrypt.hashSync(password, 10),
         role: "user",
         active: true,
         premium: false,
@@ -104,29 +87,16 @@ app.post("/register", (req, res) => {
         plan: null,
         expiresAt: null,
     };
-
     saveUsers();
 
-    const allUsers = Object.keys(users).map(email => ({
-        email,
-        role: users[email].role,
-        premium: users[email].premium || false,
-        approved: users[email].approved || false,
-        vip: users[email].plan === "vip",
-        plan: users[email].plan || null,
-        expiresAt: users[email].expiresAt || null,
-    }));
-
-    res.json({ success: true, message: "User registered successfully", users: allUsers });
+    res.json({ success: true, message: "User registered successfully" });
 });
 
 // ===== GET ALL USERS =====
 app.get("/all-users/:adminEmail", (req, res) => {
-    // Reload users from file before checking
     if (fs.existsSync(USERS_FILE)) {
         users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
     }
-
     const admin = users[req.params.adminEmail];
     if (!admin || admin.role !== "admin")
         return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -136,11 +106,9 @@ app.get("/all-users/:adminEmail", (req, res) => {
         role: users[email].role,
         premium: users[email].premium || false,
         approved: users[email].approved || false,
-        vip: users[email].plan === "vip",
         plan: users[email].plan || null,
         expiresAt: users[email].expiresAt || null,
     }));
-
     res.json({ success: true, users: allUsers });
 });
 
@@ -149,12 +117,7 @@ app.get("/games/:email", (req, res) => {
     const user = users[req.params.email];
     if (!user) return res.status(401).json({ success: false, message: "Invalid user" });
 
-    const data = slips.map(s => ({
-        ...s,
-        total: totalOdds(s.games),
-        free: s.free || false,
-    }));
-
+    const data = slips.map(s => ({ ...s, total: totalOdds(s.games), free: s.free || false }));
     if (user.role === "admin") return res.json(data);
     if (user.premium && user.approved) return res.json(data);
     res.json(data.filter(s => !s.premium));
@@ -162,11 +125,7 @@ app.get("/games/:email", (req, res) => {
 
 // ===== ADD SLIP =====
 app.post("/add-slip", (req, res) => {
-    console.log("Add-slip request:", req.body);
     const { adminEmail, slip } = req.body;
-
-    if (!adminEmail) return res.status(400).json({ success: false, message: "adminEmail required" });
-
     const admin = users[adminEmail];
     if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
 
@@ -188,33 +147,10 @@ app.post("/add-slip", (req, res) => {
         free: !slip.vip && !slip.premium,
         games: formattedGames,
     };
-
     slips.unshift(formattedSlip);
+    saveSlips();
 
-    try {
-        saveSlips();
-        console.log("Slip saved successfully!");
-        res.json({ success: true, slip: formattedSlip });
-    } catch (err) {
-        console.error("Failed to save slip:", err);
-        res.status(500).json({ success: false, message: "Failed to save slip" });
-    }
-});
-
-// ===== REMOVE SLIP =====
-app.post("/remove-slip", (req, res) => {
-    const { adminEmail, slipIndex } = req.body;
-    const admin = users[adminEmail];
-
-    if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
-
-    if (slips[slipIndex]) {
-        slips.splice(slipIndex, 1);
-        saveSlips();
-        return res.json({ success: true });
-    }
-
-    res.status(400).json({ success: false, message: "Invalid slip index" });
+    res.json({ success: true, slip: formattedSlip });
 });
 
 // ===== ACTIVATE USER =====
@@ -231,8 +167,8 @@ app.post("/activate", (req, res) => {
     user.approved = false;
     user.plan = plan;
     user.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-
     saveUsers();
+
     res.json({ success: true });
 });
 
@@ -247,6 +183,7 @@ app.post("/approve-user", (req, res) => {
 
     user.approved = true;
     saveUsers();
+
     res.json({ success: true });
 });
 
@@ -262,27 +199,9 @@ app.post("/update-game", (req, res) => {
     const game = slips[slipIndex].games[gameIndex];
     if (result !== undefined) game.result = result;
     if (overUnder !== undefined) game.overUnder = overUnder;
-
     saveSlips();
+
     res.json({ success: true, game });
-});
-
-// ===== UPDATE SLIP TYPE / BADGE =====
-app.post("/update-slip-type", (req, res) => {
-    const { adminEmail, slipIndex, type } = req.body;
-    const admin = users[adminEmail];
-    if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
-
-    if (!slips[slipIndex]) return res.status(400).json({ success: false, message: "Invalid slip index" });
-
-    slips[slipIndex].free = type === "free";
-    slips[slipIndex].premium = type === "premium";
-    slips[slipIndex].vip = type === "vip";
-
-    if (type === "vip") slips[slipIndex].premium = true;
-
-    saveSlips();
-    res.json({ success: true, slip: slips[slipIndex] });
 });
 
 // ===== START SERVER =====
