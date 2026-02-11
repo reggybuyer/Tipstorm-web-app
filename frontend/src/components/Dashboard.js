@@ -4,7 +4,6 @@ import axios from "axios";
 
 export default function Dashboard({ games, user }) {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
   const [allUsers, setAllUsers] = useState([]);
   const [localGames, setLocalGames] = useState([]);
   const [currentUser, setCurrentUser] = useState(user);
@@ -76,14 +75,11 @@ export default function Dashboard({ games, user }) {
   // Set up intervals
   useEffect(() => {
     let userInterval, adminInterval;
-
     if (currentUser.role === "admin") {
       fetchAllUsers();
       adminInterval = setInterval(fetchAllUsers, 5000);
     }
-
     userInterval = setInterval(refreshUser, 10000);
-
     return () => {
       clearInterval(userInterval);
       if (adminInterval) clearInterval(adminInterval);
@@ -102,7 +98,6 @@ export default function Dashboard({ games, user }) {
     if (field === "status") updated[slipIndex].games[gameIndex].result = value.toLowerCase();
     if (field === "overUnder") updated[slipIndex].games[gameIndex].overUnder = value;
     setLocalGames(updated);
-
     if (currentUser.role === "admin") {
       try {
         await axios.post(`${BACKEND_URL}/update-game`, {
@@ -171,8 +166,7 @@ export default function Dashboard({ games, user }) {
   };
 
   // Add new game row for slip creation
-  const addGameRow = () =>
-    setNewSlip({ ...newSlip, games: [...newSlip.games, { home: "", away: "", odd: "", overUnder: "" }] });
+  const addGameRow = () => setNewSlip({ ...newSlip, games: [...newSlip.games, { home: "", away: "", odd: "", overUnder: "" }] });
 
   // Update new slip game
   const updateNewGame = (i, field, value) => {
@@ -188,7 +182,6 @@ export default function Dashboard({ games, user }) {
     const slipToSave = { ...newSlip };
     slipToSave.total = calculateTotalOdds(slipToSave.games);
     slipToSave.free = !slipToSave.premium && !slipToSave.vip;
-
     try {
       await axios.post(`${BACKEND_URL}/add-slip`, { adminEmail: currentUser.email, slip: slipToSave });
       alert("Slip added successfully");
@@ -206,7 +199,6 @@ export default function Dashboard({ games, user }) {
     const email = emailRef.current.value.trim();
     const password = passwordRef.current.value.trim();
     if (!email || !password) return alert("Enter email and password");
-
     try {
       const res = await axios.post(`${BACKEND_URL}/register`, { email, password });
       if (res.data.success) {
@@ -280,41 +272,65 @@ export default function Dashboard({ games, user }) {
         </div>
       )}
 
-      {/* Display slips */}
+      {/* ===== SLIPS TABLE DISPLAY ===== */}
       {localGames.map((slip, si) => (
-        <div key={si} className={`slip ${slip.premium ? "premium" : slip.free ? "free" : ""}`}>
+        <div key={si} className={`slip ${slip.premium ? "premium" : slip.free ? "free" : ""}`} style={{ marginBottom: "20px" }}>
           <div className="slip-date">
             {slip.date}
             {slip.vip && <span className={`vip-badge ${isLocked(slip) ? "locked-badge" : ""}`}>VIP</span>}
             {!slip.vip && slip.premium && <span className={`premium-badge ${isLocked(slip) ? "locked-badge" : ""}`}>Premium</span>}
             {slip.free && <span className="free-badge">Free</span>}
           </div>
+
           {isLocked(slip) ? (
             <div className="locked-slip">🔒 Locked content</div>
           ) : (
-            slip.games.map((g, i) => (
-              <div key={i} className="game-row">
-                <span className="team home">{g.home}</span> vs <span className="team away">{g.away}</span>
-                <span className="odd">{g.odd}</span>
-                {currentUser.role === "admin" ? (
-                  <>
-                    <input placeholder="Over / Under" value={g.overUnder || ""} onChange={e => updateGame(si, i, "overUnder", e.target.value)} />
-                    <select value={g.result || "Pending"} onChange={e => updateGame(si, i, "status", e.target.value)}>
-                      <option value="Pending">Pending</option>
-                      <option value="Won">Won</option>
-                      <option value="Lost">Lost</option>
-                    </select>
-                  </>
-                ) : (
-                  <>
-                    {g.overUnder && <span className={`over-under-text ${g.overUnder.toLowerCase() === "over" ? "over" : "under"}`}>{g.overUnder}</span>}
-                    <span className={`over-under-text ${g.result?.toLowerCase() === "won" ? "over" : g.result?.toLowerCase() === "lost" ? "under" : "neutral"}`}>{g.result || "Pending"}</span>
-                  </>
-                )}
-              </div>
-            ))
+            <table className="slip-table">
+              <thead>
+                <tr>
+                  <th>Home</th>
+                  <th>Away</th>
+                  <th>Odd</th>
+                  <th>Over/Under</th>
+                  <th>Won/Lost</th>
+                  {currentUser.role === "admin" && <th>Update</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {slip.games.map((g, i) => (
+                  <tr key={i}>
+                    <td>{g.home}</td>
+                    <td>{g.away}</td>
+                    <td>{g.odd}</td>
+                    <td>
+                      {currentUser.role === "admin" ? (
+                        <input placeholder="Over / Under" value={g.overUnder || ""} onChange={(e) => updateGame(si, i, "overUnder", e.target.value)} />
+                      ) : (
+                        g.overUnder && <span className={`over-under-text ${g.overUnder.toLowerCase() === "over" ? "over" : "under"}`}>{g.overUnder}</span>
+                      )}
+                    </td>
+                    <td>
+                      {currentUser.role === "admin" ? (
+                        <select value={g.result || "Pending"} onChange={(e) => updateGame(si, i, "status", e.target.value)}>
+                          <option value="Pending">Pending</option>
+                          <option value="Won">Won</option>
+                          <option value="Lost">Lost</option>
+                        </select>
+                      ) : (
+                        <span className={`over-under-text ${g.result?.toLowerCase() === "won" ? "over" : g.result?.toLowerCase() === "lost" ? "under" : "neutral"}`}>
+                          {g.result || "Pending"}
+                        </span>
+                      )}
+                    </td>
+                    {currentUser.role === "admin" && <td>—</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
+
           {!isLocked(slip) && <div className="total-odds">Total Odds: {slip.total}</div>}
+
           {currentUser.role === "admin" && (
             <div className="badge-controls" style={{ marginTop: "10px" }}>
               <span>Set Badge: </span>
@@ -335,7 +351,6 @@ export default function Dashboard({ games, user }) {
             <input type="password" placeholder="Password" ref={passwordRef} />
             <button onClick={handleRegister}>Register</button>
           </div>
-
           <div className="admin-logged-users">
             <h3>Users</h3>
             <table className="users-table">
