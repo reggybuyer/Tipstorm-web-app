@@ -2,23 +2,22 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles.css";
 
-export default function AdminSlipBuilder({ adminEmail }) {
+export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
   const [games, setGames] = useState([{ home: "", away: "", odd: "", overUnder: "" }]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Replace with your actual deployed backend URL
-  const backendUrl = "https://your-tipstorm-backend.onrender.com";
+  const backendUrl = "https://your-tipstorm-backend.onrender.com"; // replace with your backend URL
 
   // Fetch admin info on mount
   useEffect(() => {
     const fetchAdmin = async () => {
       try {
         if (!adminEmail) return;
-        const response = await axios.get(`${backendUrl}/users/${adminEmail}`);
-        const admin = response.data.user;
-        if (!admin || admin.role !== "admin") {
+        const response = await axios.get(`${backendUrl}/all-users/${adminEmail}`);
+        const admin = response.data.users.find((u) => u.email === adminEmail && u.role === "admin");
+        if (!admin) {
           setMessage("Admin not found or unauthorized.");
         } else {
           setUser(admin);
@@ -84,6 +83,7 @@ export default function AdminSlipBuilder({ adminEmail }) {
       console.log("Backend response:", response.data);
       setMessage("Slip added successfully!");
       setGames([{ home: "", away: "", odd: "", overUnder: "" }]);
+      if (onSlipAdded) onSlipAdded(response.data.slip);
     } catch (err) {
       console.error(err.response?.data || err.message);
       setMessage(err.response?.data?.message || "Failed to add slip.");

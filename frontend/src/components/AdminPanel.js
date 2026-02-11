@@ -8,7 +8,7 @@ export default function AdminPanel({ adminEmail }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const backendUrl = "https://your-tipstorm-backend.onrender.com"; // your backend
+  const backendUrl = "https://your-tipstorm-backend.onrender.com"; // your backend URL
 
   // Fetch all users
   const fetchUsers = async () => {
@@ -56,6 +56,7 @@ export default function AdminPanel({ adminEmail }) {
     setLoading(false);
   };
 
+  // Render plan badge
   const renderPlanBadge = (plan) => {
     if (plan === "vip") return <span className="vip-badge">VIP</span>;
     if (plan === "monthly") return <span className="premium-badge">Monthly</span>;
@@ -69,7 +70,12 @@ export default function AdminPanel({ adminEmail }) {
       {message && <div className="message">{message}</div>}
 
       {/* ===== SLIP BUILDER ===== */}
-      <AdminSlipBuilder adminEmail={adminEmail} />
+      <AdminSlipBuilder
+        adminEmail={adminEmail}
+        onSlipAdded={(slip) => {
+          setMessage("Slip added successfully!");
+        }}
+      />
 
       {/* ===== USER MANAGEMENT ===== */}
       <div className="admin-users" style={{ marginTop: "40px" }}>
@@ -114,6 +120,7 @@ export default function AdminPanel({ adminEmail }) {
                         onClick={() => activateUser(u.email, "monthly")}
                         disabled={loading}
                         className="badge-button create-slip"
+                        style={{ marginLeft: "5px" }}
                       >
                         Monthly
                       </button>
