@@ -1,52 +1,22 @@
-{
-  "admin@test.com": {
-    "password": "$2b$10$wV2G0Rcj37Jq1peGlyh8TuFxYmBEVuVrG1EkDVPc2yBBwvbx2aoYK",
+[
+  {
+    "email": "admin@test.com",
     "role": "admin",
-    "active": true
+    "plan": "admin",
+    "approved": true
   },
-  "free@test.com": {
-    "password": "$2b$10$Eph0XzWQ4lKJN2MmgUU4UeEF1dYPz8.KYNNB/VM1Hebz4cv.Bvq8e",
+  {
+    "email": "premium@test.com",
     "role": "user",
-    "active": true,
-    "premium": true,
+    "plan": "premium",
     "approved": true,
-    "plan": "weekly",
-    "expiresAt": "2026-02-10T14:14:47.939Z"
+    "expiresAt": "2026-03-20T00:00:00Z"
   },
-  "premium@test.com": {
-    "password": "$2b$10$/TjdZKFZZ9YaAewSijb/x.rP7jz64jL59oxXawYJjDrd/A9htppdS",
+  {
+    "email": "free@test.com",
     "role": "user",
-    "active": true,
-    "premium": true,
+    "plan": "free",
     "approved": true,
-    "plan": "weekly",
-    "expiresAt": "2026-02-10T00:00:00.000Z"
-  },
-  "vipuser@test.com": {
-    "password": "$2b$10$J/XLP0YVZJYBxZGGliMz8uRx5V4kH5JEhCoePNEyXg/Nfw7mo.kSa",
-    "role": "user",
-    "active": true,
-    "premium": true,
-    "approved": true,
-    "plan": "weekly",
-    "expiresAt": "2026-02-10T09:56:54.732Z"
-  },
-  "testuser@tipstorm.com": {
-    "password": "$2b$10$3q6F.xU5gTwOZ7B8HbS/1uF0uNax4cA5OQyZx2ejXSm8qGzFhPqQO",
-    "role": "user",
-    "active": true,
-    "premium": false,
-    "approved": true,
-    "plan": "none",
-    "expiresAt": null
-  },
-  "user@test.com": {
-    "password": "$2b$10$izRybtiwz3OxktitXqZmU.Ro2YjP7df..H6lwP3II2vaB/GfR.QoW",
-    "role": "user",
-    "active": true,
-    "premium": false,
-    "approved": false,
-    "plan": null,
     "expiresAt": null
   }
-}
+] 
