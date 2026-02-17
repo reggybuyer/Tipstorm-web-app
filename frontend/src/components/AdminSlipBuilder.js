@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
+import "../styles.css";
 
 export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
   const [games, setGames] = useState([{ home: "", away: "", odd: "", overUnder: "" }]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Backend URL (remove markdown-style brackets)
   const backendUrl = "https://tipstorm-web-app.onrender.com";
 
   // Handle input changes
@@ -36,7 +36,6 @@ export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
       }
     }
 
-    // Build slip object
     const slip = {
       date: new Date().toISOString().split("T")[0],
       premium: true,
@@ -49,17 +48,11 @@ export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
     };
 
     try {
-      // ✅ Correct axios POST call
-      const res = await axios.post(`${backendUrl}/add-slip`, {
-        adminEmail,
-        slip,
-      });
-
+      const res = await axios.post(`${backendUrl}/add-slip`, { adminEmail, slip });
       if (res.data.success) {
-        setMessage("Slip added successfully!");
+        setMessage("✅ Slip added successfully!");
         setGames([{ home: "", away: "", odd: "", overUnder: "" }]);
-        if (onSlipAdded) onSlipAdded(); // refresh slips in parent
-        console.log("Slip response:", res.data);
+        if (onSlipAdded) onSlipAdded();
       } else {
         setMessage(res.data.message || "Failed to add slip");
       }
@@ -82,29 +75,39 @@ export default function AdminSlipBuilder({ adminEmail, onSlipAdded }) {
             value={g.home}
             onChange={(e) => handleChange(i, "home", e.target.value)}
             placeholder="Home Team"
+            className="input-field"
           />
           <input
             value={g.away}
             onChange={(e) => handleChange(i, "away", e.target.value)}
             placeholder="Away Team"
+            className="input-field"
           />
           <input
             value={g.odd}
             onChange={(e) => handleChange(i, "odd", e.target.value)}
             placeholder="Odd"
             type="number"
+            className="input-field"
           />
           <input
             value={g.overUnder}
             onChange={(e) => handleChange(i, "overUnder", e.target.value)}
             placeholder="Over/Under"
+            className="input-field"
           />
-          {games.length > 1 && <button onClick={() => removeRow(i)}>Remove</button>}
+          {games.length > 1 && (
+            <button className="remove-btn" onClick={() => removeRow(i)}>
+              Remove
+            </button>
+          )}
         </div>
       ))}
 
-      <button onClick={addRow}>Add Game</button>
-      <button onClick={handleSubmit} disabled={loading}>
+      <button className="add-btn" onClick={addRow}>
+        + Add Game
+      </button>
+      <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
         {loading ? "Submitting..." : "Submit Slip"}
       </button>
     </div>

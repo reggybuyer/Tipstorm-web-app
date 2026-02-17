@@ -3,13 +3,11 @@ import axios from "axios";
 import AdminSlipBuilder from "./AdminSlipBuilder";
 import "../styles.css";
 
-export default function AdminPanel({ adminEmail }) {
+export default function AdminPanel({ adminEmail, onLogout }) {
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [slips, setSlips] = useState([]);
-
-  // ✅ CORRECT BACKEND URL
   const backendUrl = "https://tipstorm-web-app.onrender.com";
 
   // Fetch all users
@@ -43,12 +41,10 @@ export default function AdminPanel({ adminEmail }) {
   useEffect(() => {
     fetchUsers();
     fetchSlips();
-
     const interval = setInterval(() => {
       fetchUsers();
       fetchSlips();
-    }, 15000);
-
+    }, 15000); // auto-refresh
     return () => clearInterval(interval);
   }, [adminEmail]);
 
@@ -62,7 +58,6 @@ export default function AdminPanel({ adminEmail }) {
         userEmail: email,
         plan,
       });
-
       setMessage(`Activated ${plan.toUpperCase()} plan for ${email}`);
       fetchUsers();
     } catch (err) {
@@ -81,7 +76,6 @@ export default function AdminPanel({ adminEmail }) {
         adminEmail,
         userEmail: email,
       });
-
       setMessage(`Approved ${email}`);
       fetchUsers();
     } catch (err) {
@@ -92,14 +86,10 @@ export default function AdminPanel({ adminEmail }) {
   };
 
   const renderPlanBadge = (plan) => {
-    if (!plan || plan === "none")
-      return <span className="free-badge">None</span>;
-    if (plan === "weekly")
-      return <span className="free-badge">Weekly</span>;
-    if (plan === "monthly")
-      return <span className="premium-badge">Monthly</span>;
-    if (plan === "vip")
-      return <span className="vip-badge">VIP</span>;
+    if (!plan || plan === "none") return <span className="free-badge">None</span>;
+    if (plan === "weekly") return <span className="free-badge">Weekly</span>;
+    if (plan === "monthly") return <span className="premium-badge">Monthly</span>;
+    if (plan === "vip") return <span className="vip-badge">VIP</span>;
     return <span className="free-badge">None</span>;
   };
 
@@ -107,15 +97,21 @@ export default function AdminPanel({ adminEmail }) {
     <div className="admin-panel container">
       <h2>Admin Panel</h2>
 
+      {/* Logout button */}
+      <button className="logout-btn" onClick={onLogout}>
+        Logout
+      </button>
+
       {message && <div className="message">{message}</div>}
 
+      {/* Slip Builder */}
       <AdminSlipBuilder
         adminEmail={adminEmail}
         onSlipAdded={() => fetchSlips()}
       />
 
+      {/* Slips List */}
       <h3>All Slips</h3>
-
       {slips.length === 0 ? (
         <p>No slips available</p>
       ) : (
@@ -140,8 +136,7 @@ export default function AdminPanel({ adminEmail }) {
                 <td>
                   {s.games.map((g, i) => (
                     <div key={i}>
-                      {g.home} vs {g.away} - Odd: {g.odd} - O/U:{" "}
-                      {g.overUnder || "-"}
+                      {g.home} vs {g.away} - Odd: {g.odd} - O/U: {g.overUnder || "-"}
                     </div>
                   ))}
                 </td>
@@ -152,8 +147,8 @@ export default function AdminPanel({ adminEmail }) {
         </table>
       )}
 
+      {/* User Management */}
       <h3>Manage Users</h3>
-
       <table className="users-table">
         <thead>
           <tr>
@@ -179,37 +174,34 @@ export default function AdminPanel({ adminEmail }) {
                 <td>{renderPlanBadge(u.plan)}</td>
                 <td>{u.premium ? "Yes" : "No"}</td>
                 <td>{u.approved ? "Yes" : "No"}</td>
-                <td>
-                  {u.expiresAt
-                    ? new Date(u.expiresAt).toLocaleDateString()
-                    : "-"}
-                </td>
+                <td>{u.expiresAt ? new Date(u.expiresAt).toLocaleDateString() : "-"}</td>
                 <td>
                   {u.role !== "admin" && (
                     <>
                       <button
+                        className="activate-weekly"
                         onClick={() => activateUser(u.email, "weekly")}
                         disabled={loading}
                       >
                         Weekly
                       </button>
-
                       <button
+                        className="activate-monthly"
                         onClick={() => activateUser(u.email, "monthly")}
                         disabled={loading}
                       >
                         Monthly
                       </button>
-
                       <button
+                        className="activate-vip"
                         onClick={() => activateUser(u.email, "vip")}
                         disabled={loading}
                       >
                         VIP
                       </button>
-
                       {!u.approved && (
                         <button
+                          className="approve-btn"
                           onClick={() => approveUser(u.email)}
                           disabled={loading}
                         >
