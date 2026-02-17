@@ -7,6 +7,7 @@ export default function AdminPanel({ adminEmail }) {
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [slips, setSlips] = useState([]); // ✅ Store slips
 
   const backendUrl = "https://tipstorm-web-app.onrender.com";
 
@@ -16,8 +17,9 @@ export default function AdminPanel({ adminEmail }) {
     try {
       const res = await axios.get(`${backendUrl}/all-users/${adminEmail}`);
       if (res.data.success) {
-        // Sort users by role first
-        const sorted = res.data.users.sort((a, b) => a.role === "admin" ? -1 : 1);
+        const sorted = res.data.users.sort((a, b) =>
+          a.role === "admin" ? -1 : 1
+        );
         setUsers(sorted);
       }
     } catch (err) {
@@ -26,15 +28,31 @@ export default function AdminPanel({ adminEmail }) {
     }
   };
 
+  // Fetch all slips (admin can see all)
+  const fetchSlips = async () => {
+    if (!adminEmail) return;
+    try {
+      const res = await axios.get(`${backendUrl}/games/${adminEmail}`);
+      setSlips(res.data);
+    } catch (err) {
+      console.error("Failed to fetch slips:", err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
-    const interval = setInterval(fetchUsers, 15000); // auto-refresh
+    fetchSlips();
+    const interval = setInterval(() => {
+      fetchUsers();
+      fetchSlips();
+    }, 15000); // auto-refresh
     return () => clearInterval(interval);
   }, [adminEmail]);
 
   // Activate user plan
   const activateUser = async (email, plan) => {
-    setLoading(true); setMessage("");
+    setLoading(true);
+    setMessage("");
     try {
       await axios.post(`${backendUrl}/activate`, { adminEmail, userEmail: email, plan });
       setMessage(`Activated ${plan.toUpperCase()} plan for ${email}`);
@@ -48,7 +66,8 @@ export default function AdminPanel({ adminEmail }) {
 
   // Approve user
   const approveUser = async (email) => {
-    setLoading(true); setMessage("");
+    setLoading(true);
+    setMessage("");
     try {
       await axios.post(`${backendUrl}/approve-user`, { adminEmail, userEmail: email });
       setMessage(`Approved ${email}`);
@@ -60,7 +79,7 @@ export default function AdminPanel({ adminEmail }) {
     setLoading(false);
   };
 
-  // Render plan badges
+  // Render plan badge
   const renderPlanBadge = (plan) => {
     if (!plan || plan === "none") return <span className="free-badge">None</span>;
     if (plan === "weekly") return <span className="free-badge">Weekly</span>;
@@ -75,7 +94,49 @@ export default function AdminPanel({ adminEmail }) {
       {message && <div className="message">{message}</div>}
 
       {/* Slip Builder */}
-      <AdminSlipBuilder adminEmail={adminEmail} onSlipAdded={fetchUsers} />
+      <AdminSlipBuilder
+        adminEmail={adminEmail}
+        onSlipAdded={() => {
+          fetchSlips(); // ✅ Refresh slips after adding
+        }}
+      />
+
+      {/* Slips List */}
+      <h3>All Slips</h3>
+      {slips.length === 0 ? (
+        <p>No slips available</p>
+      ) : (
+        <table className="slips-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Premium</th>
+              <th>VIP</th>
+              <th>Free</th>
+              <th>Games</th>
+              <th>Total Odds</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slips.map((s) => (
+              <tr key={s._id}>
+                <td>{s.date}</td>
+                <td>{s.premium ? "Yes" : "No"}</td>
+                <td>{s.vip ? "Yes" : "No"}</td>
+                <td>{s.free ? "Yes" : "No"}</td>
+                <td>
+                  {s.games.map((g, i) => (
+                    <div key={i}>
+                      {g.home} vs {g.away} - Odd: {g.odd} - O/U: {g.overUnder || "-"}
+                    </div>
+                  ))}
+                </td>
+                <td>{s.total || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {/* User Management */}
       <h3>Manage Users</h3>
@@ -93,9 +154,11 @@ export default function AdminPanel({ adminEmail }) {
         </thead>
         <tbody>
           {users.length === 0 ? (
-            <tr><td colSpan={7}>No users found</td></tr>
+            <tr>
+              <td colSpan={7}>No users found</td>
+            </tr>
           ) : (
-            users.map(u => (
+            users.map((u) => (
               <tr key={u.email}>
                 <td>{u.email}</td>
                 <td>{u.role}</td>
@@ -106,10 +169,20 @@ export default function AdminPanel({ adminEmail }) {
                 <td>
                   {u.role !== "admin" && (
                     <>
-                      <button onClick={() => activateUser(u.email, "weekly")} disabled={loading}>Weekly</button>
-                      <button onClick={() => activateUser(u.email, "monthly")} disabled={loading}>Monthly</button>
-                      <button onClick={() => activateUser(u.email, "vip")} disabled={loading}>VIP</button>
-                      {!u.approved && <button onClick={() => approveUser(u.email)} disabled={loading}>Approve</button>}
+                      <button onClick={() => activateUser(u.email, "weekly")} disabled={loading}>
+                        Weekly
+                      </button>
+                      <button onClick={() => activateUser(u.email, "monthly")} disabled={loading}>
+                        Monthly
+                      </button>
+                      <button onClick={() => activateUser(u.email, "vip")} disabled={loading}>
+                        VIP
+                      </button>
+                      {!u.approved && (
+                        <button onClick={() => approveUser(u.email)} disabled={loading}>
+                          Approve
+                        </button>
+                      )}
                     </>
                   )}
                 </td>

@@ -3,9 +3,7 @@ import axios from "axios";
 import "../styles.css";
 
 export default function Login({ setUser }) {
-
-  const BACKEND_URL = "https://tipstorm-web-app.onrender.com";
-
+  const BACKEND_URL = "https://tipstorm-web-app.onrender.com"; // Fixed URL
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,13 +15,19 @@ export default function Login({ setUser }) {
     setError("");
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/login`, {
-        email,
-        password,
-      });
+      const res = await axios.post(`${BACKEND_URL}/login`, { email, password });
 
       if (res.data.success) {
-        setUser(res.data.user);
+        // Make sure user object has all fields needed in dashboard
+        const userData = {
+          email: res.data.user.email,
+          role: res.data.user.role || "user",
+          premium: res.data.user.premium || false,
+          approved: res.data.user.approved || false,
+          plan: res.data.user.plan || null,
+          expiresAt: res.data.user.expiresAt || null,
+        };
+        setUser(userData);
       } else {
         setError(res.data.message || "Login failed");
       }
@@ -38,11 +42,13 @@ export default function Login({ setUser }) {
     e.preventDefault();
     setError("");
 
+    if (!email || !password) {
+      setError("Enter email and password");
+      return;
+    }
+
     try {
-      const res = await axios.post(`${BACKEND_URL}/register`, {
-        email,
-        password,
-      });
+      const res = await axios.post(`${BACKEND_URL}/register`, { email, password });
 
       if (res.data.success) {
         alert("Registration successful! You can now log in.");
@@ -75,7 +81,6 @@ export default function Login({ setUser }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-
         <input
           type="password"
           placeholder="Password"
@@ -84,9 +89,7 @@ export default function Login({ setUser }) {
           required
         />
 
-        <button type="submit">
-          {isRegister ? "Register" : "Login"}
-        </button>
+        <button type="submit">{isRegister ? "Register" : "Login"}</button>
 
         <p style={{ fontSize: "0.8rem", marginTop: "10px" }}>
           {isRegister ? (
