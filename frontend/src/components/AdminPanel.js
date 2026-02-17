@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AdminSlipBuilder from "./AdminSlipBuilder";
-import "../styles.css";
 
 export default function AdminPanel({ adminEmail, onLogout }) {
   const [users, setUsers] = useState([]);
+  const [slips, setSlips] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [slips, setSlips] = useState([]);
+
   const backendUrl = "https://tipstorm-web-app.onrender.com";
 
-  // Fetch all users
   const fetchUsers = async () => {
     if (!adminEmail) return;
     try {
       const res = await axios.get(`${backendUrl}/all-users/${adminEmail}`);
       if (res.data.success) {
-        const sorted = res.data.users.sort((a, b) =>
-          a.role === "admin" ? -1 : 1
-        );
+        const sorted = res.data.users.sort((a, b) => (a.role === "admin" ? -1 : 1));
         setUsers(sorted);
       }
     } catch (err) {
@@ -27,7 +24,6 @@ export default function AdminPanel({ adminEmail, onLogout }) {
     }
   };
 
-  // Fetch all slips
   const fetchSlips = async () => {
     if (!adminEmail) return;
     try {
@@ -44,20 +40,15 @@ export default function AdminPanel({ adminEmail, onLogout }) {
     const interval = setInterval(() => {
       fetchUsers();
       fetchSlips();
-    }, 15000); // auto-refresh
+    }, 15000);
     return () => clearInterval(interval);
   }, [adminEmail]);
 
-  // Activate user plan
   const activateUser = async (email, plan) => {
     setLoading(true);
     setMessage("");
     try {
-      await axios.post(`${backendUrl}/activate`, {
-        adminEmail,
-        userEmail: email,
-        plan,
-      });
+      await axios.post(`${backendUrl}/activate`, { adminEmail, userEmail: email, plan });
       setMessage(`Activated ${plan.toUpperCase()} plan for ${email}`);
       fetchUsers();
     } catch (err) {
@@ -67,15 +58,11 @@ export default function AdminPanel({ adminEmail, onLogout }) {
     setLoading(false);
   };
 
-  // Approve user
   const approveUser = async (email) => {
     setLoading(true);
     setMessage("");
     try {
-      await axios.post(`${backendUrl}/approve-user`, {
-        adminEmail,
-        userEmail: email,
-      });
+      await axios.post(`${backendUrl}/approve-user`, { adminEmail, userEmail: email });
       setMessage(`Approved ${email}`);
       fetchUsers();
     } catch (err) {
@@ -97,20 +84,14 @@ export default function AdminPanel({ adminEmail, onLogout }) {
     <div className="admin-panel container">
       <h2>Admin Panel</h2>
 
-      {/* Logout button */}
       <button className="logout-btn" onClick={onLogout}>
         Logout
       </button>
 
       {message && <div className="message">{message}</div>}
 
-      {/* Slip Builder */}
-      <AdminSlipBuilder
-        adminEmail={adminEmail}
-        onSlipAdded={() => fetchSlips()}
-      />
+      <AdminSlipBuilder adminEmail={adminEmail} onSlipAdded={fetchSlips} />
 
-      {/* Slips List */}
       <h3>All Slips</h3>
       {slips.length === 0 ? (
         <p>No slips available</p>
@@ -147,7 +128,6 @@ export default function AdminPanel({ adminEmail, onLogout }) {
         </table>
       )}
 
-      {/* User Management */}
       <h3>Manage Users</h3>
       <table className="users-table">
         <thead>
@@ -178,36 +158,10 @@ export default function AdminPanel({ adminEmail, onLogout }) {
                 <td>
                   {u.role !== "admin" && (
                     <>
-                      <button
-                        className="activate-weekly"
-                        onClick={() => activateUser(u.email, "weekly")}
-                        disabled={loading}
-                      >
-                        Weekly
-                      </button>
-                      <button
-                        className="activate-monthly"
-                        onClick={() => activateUser(u.email, "monthly")}
-                        disabled={loading}
-                      >
-                        Monthly
-                      </button>
-                      <button
-                        className="activate-vip"
-                        onClick={() => activateUser(u.email, "vip")}
-                        disabled={loading}
-                      >
-                        VIP
-                      </button>
-                      {!u.approved && (
-                        <button
-                          className="approve-btn"
-                          onClick={() => approveUser(u.email)}
-                          disabled={loading}
-                        >
-                          Approve
-                        </button>
-                      )}
+                      <button onClick={() => activateUser(u.email, "weekly")}>Weekly</button>
+                      <button onClick={() => activateUser(u.email, "monthly")}>Monthly</button>
+                      <button onClick={() => activateUser(u.email, "vip")}>VIP</button>
+                      {!u.approved && <button onClick={() => approveUser(u.email)}>Approve</button>}
                     </>
                   )}
                 </td>
