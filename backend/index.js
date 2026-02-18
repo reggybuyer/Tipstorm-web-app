@@ -3,30 +3,19 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// MongoDB connection
+// ===== MongoDB connection =====
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
-
-// Test route
-app.get("/", (req, res) => {
-  res.json({ message: "TipStorm backend running" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
- 
-
 
 // ===== Schemas =====
 const userSchema = new mongoose.Schema({
@@ -76,19 +65,24 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ===== LOGIN =====
+// ===== Routes =====
+
+// Test
+app.get("/", (req, res) => {
+  res.json({ message: "TipStorm backend running" });
+});
+
+// Login
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user)
-      return res.json({ success: false, message: "Invalid login" });
+    if (!user) return res.json({ success: false, message: "Invalid login" });
     if (!user.approved)
       return res.json({ success: false, message: "Account not approved yet" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.json({ success: false, message: "Invalid login" });
+    if (!isMatch) return res.json({ success: false, message: "Invalid login" });
 
     // Expiry check
     if (user.plan !== "free" && user.expiresAt) {
@@ -116,34 +110,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// ===== REGISTER =====
+// Register
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res.status(400).json({
-        success: false,
-        message: "Email and password required",
-      });
+      return res.status(400).json({ success: false, message: "Email and password required" });
 
     const exists = await User.findOne({ email });
     if (exists)
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+      return res.status(400).json({ success: false, message: "User already exists" });
 
     const hashed = bcrypt.hashSync(password, 10);
-    await User.create({
-      email,
-      password: hashed,
-      role: "user", // default role
-      premium: false,
-      approved: false,
-      plan: null,
-      expiresAt: null,
-    });
-
+    await User.create({ email, password: hashed, role: "user" });
     res.json({
       success: true,
       message: "User registered successfully. Await admin approval.",
@@ -154,13 +133,13 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// ===== GET ALL USERS (Admin only) =====
+// Get all users (admin only)
 app.get("/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
-    if (!admin || admin.role !== "admin") {
+    if (!admin || admin.role !== "admin")
       return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
+
     const users = await User.find();
     res.json({
       success: true,
@@ -179,7 +158,7 @@ app.get("/all-users/:adminEmail", async (req, res) => {
   }
 });
 
-// ===== GET SLIPS FOR USER =====
+// Get slips for user
 app.get("/games/:email", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
@@ -204,17 +183,16 @@ app.get("/games/:email", async (req, res) => {
   }
 });
 
-// ===== ADD SLIP (Admin only) =====
+// Add slip (admin only)
 app.post("/add-slip", async (req, res) => {
   try {
     const { adminEmail, slip } = req.body;
     const admin = await User.findOne({ email: adminEmail });
-    if (!admin || admin.role !== "admin") {
+    if (!admin || admin.role !== "admin")
       return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
-    if (!slip || !slip.date || !Array.isArray(slip.games) || slip.games.length === 0) {
+
+    if (!slip || !slip.date || !Array.isArray(slip.games) || slip.games.length === 0)
       return res.status(400).json({ success: false, message: "Invalid slip data" });
-    }
 
     const formattedGames = slip.games.map((g) => ({
       home: g.home,
@@ -240,7 +218,7 @@ app.post("/add-slip", async (req, res) => {
   }
 });
 
-// ===== ACTIVATE USER (Admin sets plan) =====
+// Activate user (admin sets plan)
 app.post("/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
@@ -252,7 +230,6 @@ app.post("/activate", async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     const days = plan === "monthly" ? 30 : plan === "vip" ? 30 : 7;
-
     user.premium = true;
     user.approved = false; // admin still needs to approve
     user.plan = plan;
@@ -266,14 +243,13 @@ app.post("/activate", async (req, res) => {
   }
 });
 
-// ===== APPROVE USER =====
+// Approve user
 app.post("/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
     const admin = await User.findOne({ email: adminEmail });
-    if (!admin || admin.role !== "admin") {
+    if (!admin || admin.role !== "admin")
       return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
 
     const user = await User.findOne({ email: userEmail });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
@@ -288,7 +264,7 @@ app.post("/approve-user", async (req, res) => {
   }
 });
 
-// ===== UPDATE GAME =====
+// Update game
 app.post("/update-game", async (req, res) => {
   try {
     const { adminEmail, slipId, gameIndex, result, overUnder } = req.body;
@@ -311,7 +287,7 @@ app.post("/update-game", async (req, res) => {
   }
 });
 
-// ===== UPDATE SLIP TYPE =====
+// Update slip type
 app.post("/update-slip-type", async (req, res) => {
   try {
     const { adminEmail, slipId, type } = req.body;
@@ -334,7 +310,7 @@ app.post("/update-slip-type", async (req, res) => {
   }
 });
 
-// ===== START SERVER =====
+// ===== Start server =====
 app.listen(PORT, () => {
   console.log(`TipStorm backend running at port ${PORT}`);
 }); 
