@@ -4,14 +4,21 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const path = require("path"); // <-- Needed for static files
-
+const path = require("path");
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend static files (admin.html)
-app.use(express.static(path.join(__dirname, "frontend")));
+// ===== Serve frontend automatically =====
+// Serve all files in frontend folder
+const frontendPath = path.join(__dirname, "frontend");
+app.use(express.static(frontendPath));
+
+// Fallback: serve index.html for any unknown route (optional if you have SPA)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 const PORT = process.env.PORT || 5000;
 
@@ -71,32 +78,25 @@ app.use(async (req, res, next) => {
 
 // ===== Routes =====
 // Test
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.json({ message: "TipStorm backend running" });
 });
 
 // Register
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res
-        .status(400)
-        .json({ success: false, message: "Email and password required" });
+      return res.status(400).json({ success: false, message: "Email and password required" });
 
     const exists = await User.findOne({ email });
     if (exists)
-      return res
-        .status(400)
-        .json({ success: false, message: "User already exists" });
+      return res.status(400).json({ success: false, message: "User already exists" });
 
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed, role: "user" });
 
-    res.json({
-      success: true,
-      message: "User registered successfully. Await admin approval.",
-    });
+    res.json({ success: true, message: "User registered successfully. Await admin approval." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -104,18 +104,16 @@ app.post("/register", async (req, res) => {
 });
 
 // Login
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.json({ success: false, message: "Invalid login" });
-    if (!user.approved)
-      return res.json({ success: false, message: "Account not approved yet" });
+    if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.json({ success: false, message: "Invalid login" });
 
-    // Expiry check
     if (user.plan !== "free" && user.expiresAt) {
       const now = new Date();
       if (now > new Date(user.expiresAt)) {
@@ -125,16 +123,7 @@ app.post("/login", async (req, res) => {
       }
     }
 
-    res.json({
-      success: true,
-      user: {
-        email: user.email,
-        role: user.role,
-        plan: user.plan,
-        premium: user.premium,
-        approved: user.approved,
-      },
-    });
+    res.json({ success: true, user: { email: user.email, role: user.role, plan: user.plan, premium: user.premium, approved: user.approved } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -142,12 +131,10 @@ app.post("/login", async (req, res) => {
 });
 
 // Get all users (admin)
-app.get("/all-users/:adminEmail", async (req, res) => {
+app.get("/api/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
-    if (!admin || admin.role !== "admin")
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-
+    if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
     const users = await User.find();
     res.json({ success: true, users });
   } catch (err) {
@@ -157,12 +144,11 @@ app.get("/all-users/:adminEmail", async (req, res) => {
 });
 
 // Add slip (admin)
-app.post("/add-slip", async (req, res) => {
+app.post("/api/add-slip", async (req, res) => {
   try {
     const { adminEmail, slip } = req.body;
     const admin = await User.findOne({ email: adminEmail });
-    if (!admin || admin.role !== "admin")
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+    if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
 
     const formattedGames = slip.games.map((g) => ({
       home: g.home,
