@@ -1,10 +1,10 @@
 // TipStorm Backend - index.js
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const cron = require("node-cron");
 
 const app = express();
 app.use(cors());
@@ -56,19 +56,24 @@ function totalOdds(games) {
   );
 }
 
-// ===== Auto-expire premium users =====
-app.use(async (req, res, next) => {
+// ===== Auto-expire premium users with cron =====
+// Runs every hour at minute 0
+cron.schedule("0 * * * *", async () => {
   const now = new Date();
-  await User.updateMany(
-    { premium: true, expiresAt: { $lt: now } },
-    { premium: false, approved: false, plan: null, expiresAt: null }
-  );
-  next();
+  try {
+    const result = await User.updateMany(
+      { premium: true, expiresAt: { $lt: now } },
+      { premium: false, approved: false, plan: null, expiresAt: null }
+    );
+    console.log(`Auto-expired users checked at ${now}. Modified: ${result.modifiedCount}`);
+  } catch (err) {
+    console.error("Cron auto-expire error:", err);
+  }
 });
 
 // ===== Routes =====
 
-// Test
+// Test route
 app.get("/", (req, res) => {
   res.json({ message: "TipStorm backend running" });
 });
@@ -77,7 +82,6 @@ app.get("/", (req, res) => {
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password)
       return res.status(400).json({ success: false, message: "Email and password required" });
 
@@ -86,7 +90,6 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "User already exists" });
 
     const hashed = bcrypt.hashSync(password, 10);
-
     await User.create({ email, password: hashed, role: "user" });
 
     res.json({
@@ -103,17 +106,12 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
-    if (!user)
-      return res.json({ success: false, message: "Invalid login" });
-
-    if (!user.approved)
-      return res.json({ success: false, message: "Account not approved yet" });
+    if (!user) return res.json({ success: false, message: "Invalid login" });
+    if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.json({ success: false, message: "Invalid login" });
+    if (!isMatch) return res.json({ success: false, message: "Invalid login" });
 
     // Expiry check
     if (user.plan !== "free" && user.expiresAt) {
@@ -145,16 +143,82 @@ app.post("/login", async (req, res) => {
 app.get("/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
-
     if (!admin || admin.role !== "admin")
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const users = await User.find();
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
-    res.json({
-      success: true,
-      users,
+// Activate user (admin sets plan)
+app.post("/activate", async (req, res) => {
+  try {
+    const { adminEmail, userEmail, plan } = req.body;
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin || admin.role !== "admin")
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    const days = plan === "monthly" || plan === "vip" ? 30 : 7;
+    user.premium = true;
+    user.approved = false; // admin still needs to approve
+    user.plan = plan;
+    user.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    await user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Approve user
+app.post("/approve-user", async (req, res) => {
+  try {
+    const { adminEmail, userEmail } = req.body;
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin || admin.role !== "admin")
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    user.approved = true;
+    await user.save();
+
+    res.json({ success: true, message: `${userEmail} approved successfully` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Get slips for user
+app.get("/games/:email", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    let slips = await Slip.find();
+    slips = slips.map((s) => ({ ...s.toObject(), total: totalOdds(s.games) }));
+
+    if (user.role === "admin") return res.json(slips);
+
+    const visibleSlips = slips.filter((s) => {
+      if (s.free) return true;
+      if (s.premium && ["weekly", "monthly", "vip"].includes(user.plan)) return true;
+      if (s.vip && user.plan === "vip") return true;
+      return false;
     });
+
+    res.json(visibleSlips);
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -165,10 +229,12 @@ app.get("/all-users/:adminEmail", async (req, res) => {
 app.post("/add-slip", async (req, res) => {
   try {
     const { adminEmail, slip } = req.body;
-
     const admin = await User.findOne({ email: adminEmail });
     if (!admin || admin.role !== "admin")
       return res.status(403).json({ success: false, message: "Unauthorized" });
+
+    if (!slip || !slip.date || !Array.isArray(slip.games) || slip.games.length === 0)
+      return res.status(400).json({ success: false, message: "Invalid slip data" });
 
     const formattedGames = slip.games.map((g) => ({
       home: g.home,
@@ -191,6 +257,52 @@ app.post("/add-slip", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Failed to add slip" });
+  }
+});
+
+// Update game (admin)
+app.post("/update-game", async (req, res) => {
+  try {
+    const { adminEmail, slipId, gameIndex, result, overUnder } = req.body;
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin || admin.role !== "admin")
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const slip = await Slip.findById(slipId);
+    if (!slip || !slip.games[gameIndex])
+      return res.status(400).json({ success: false, message: "Invalid slip/game index" });
+
+    if (result !== undefined) slip.games[gameIndex].result = result;
+    if (overUnder !== undefined) slip.games[gameIndex].overUnder = overUnder;
+    await slip.save();
+
+    res.json({ success: true, game: slip.games[gameIndex] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Update slip type (admin)
+app.post("/update-slip-type", async (req, res) => {
+  try {
+    const { adminEmail, slipId, type } = req.body;
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin || admin.role !== "admin")
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const slip = await Slip.findById(slipId);
+    if (!slip) return res.status(400).json({ success: false, message: "Invalid slip" });
+
+    slip.free = type === "free";
+    slip.premium = type === "premium";
+    slip.vip = type === "vip";
+    await slip.save();
+
+    res.json({ success: true, slip });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
