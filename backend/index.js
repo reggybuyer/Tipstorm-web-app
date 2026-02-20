@@ -14,9 +14,9 @@ app.use(express.json());
 const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
 
-// Serve admin.html explicitly
+// Serve admin.html explicitly from frontend/public
 app.get("/admin.html", (req, res) => {
-  res.sendFile(path.join(frontendPath, "admin.html"));
+  res.sendFile(path.join(__dirname, "../frontend/public/admin.html"));
 });
 
 // Fallback for React SPA (any route not matched above)
@@ -69,6 +69,7 @@ app.use(async (req, res, next) => {
 });
 
 // ===== Routes =====
+
 // Test
 app.get("/api", (req, res) => res.json({ message: "TipStorm backend running" }));
 
@@ -78,7 +79,6 @@ app.post("/api/register", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password)
       return res.status(400).json({ success: false, message: "Email and password required" });
-
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ success: false, message: "User already exists" });
 
@@ -99,7 +99,8 @@ app.post("/api/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.json({ success: false, message: "Invalid login" });
     if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
-    if (!bcrypt.compareSync(password, user.password)) return res.json({ success: false, message: "Invalid login" });
+    if (!bcrypt.compareSync(password, user.password))
+      return res.json({ success: false, message: "Invalid login" });
 
     if (user.plan !== "free" && user.expiresAt && new Date() > new Date(user.expiresAt)) {
       user.plan = "free";
@@ -109,7 +110,13 @@ app.post("/api/login", async (req, res) => {
 
     res.json({
       success: true,
-      user: { email: user.email, role: user.role, plan: user.plan, premium: user.premium, approved: user.approved },
+      user: {
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        premium: user.premium,
+        approved: user.approved,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -121,7 +128,8 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
-    if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
+    if (!admin || admin.role !== "admin")
+      return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const users = await User.find();
     res.json({ success: true, users });
@@ -136,14 +144,14 @@ app.post("/api/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
     const admin = await User.findOne({ email: adminEmail });
-    if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
+    if (!admin || admin.role !== "admin")
+      return res.status(403).json({ success: false, message: "Unauthorized" });
 
     const user = await User.findOne({ email: userEmail });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     user.approved = true;
     await user.save();
-
     res.json({ success: true, message: `${userEmail} approved successfully` });
   } catch (err) {
     console.error(err);
@@ -156,14 +164,16 @@ app.post("/api/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
     const admin = await User.findOne({ email: adminEmail });
-    if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
+    if (!admin || admin.role !== "admin")
+      return res.status(403).json({ success: false, message: "Unauthorized" });
 
     const user = await User.findOne({ email: userEmail });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     user.plan = plan;
     user.premium = plan !== "free";
-    user.expiresAt = plan !== "free" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+    user.expiresAt =
+      plan !== "free" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
     await user.save();
 
     res.json({ success: true, message: `${userEmail} activated on ${plan}` });
