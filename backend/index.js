@@ -10,17 +10,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ===== Serve frontend automatically =====
-// Serve all files in frontend folder
-const frontendPath = path.join(__dirname, "frontend");
+// ===== Serve frontend =====
+const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
 
-// Fallback: serve index.html for any unknown route (optional if you have SPA)
+// Serve admin.html explicitly
+app.get("/admin.html", (req, res) => {
+  res.sendFile(path.join(frontendPath, "admin.html"));
+});
+
+// Fallback for React SPA
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
-
-const PORT = process.env.PORT || 5000;
 
 // ===== MongoDB connection =====
 mongoose
@@ -44,15 +46,7 @@ const slipSchema = new mongoose.Schema({
   vip: { type: Boolean, default: false },
   premium: { type: Boolean, default: false },
   free: { type: Boolean, default: true },
-  games: [
-    {
-      home: String,
-      away: String,
-      odd: Number,
-      overUnder: String,
-      result: String,
-    },
-  ],
+  games: [{ home: String, away: String, odd: Number, overUnder: String, result: String }],
   total: Number,
 });
 
@@ -61,9 +55,7 @@ const Slip = mongoose.model("Slip", slipSchema);
 
 // ===== Helper =====
 function totalOdds(games) {
-  return Number(
-    games.reduce((total, game) => total * Number(game.odd || 1), 1).toFixed(2)
-  );
+  return Number(games.reduce((total, g) => total * Number(g.odd || 1), 1).toFixed(2));
 }
 
 // ===== Auto-expire premium users =====
@@ -78,24 +70,17 @@ app.use(async (req, res, next) => {
 
 // ===== Routes =====
 // Test
-app.get("/api", (req, res) => {
-  res.json({ message: "TipStorm backend running" });
-});
+app.get("/api", (req, res) => res.json({ message: "TipStorm backend running" }));
 
 // Register
 app.post("/api/register", async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ success: false, message: "Email and password required" });
-
+    if (!email || !password) return res.status(400).json({ success: false, message: "Email and password required" });
     const exists = await User.findOne({ email });
-    if (exists)
-      return res.status(400).json({ success: false, message: "User already exists" });
-
+    if (exists) return res.status(400).json({ success: false, message: "User already exists" });
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed, role: "user" });
-
     res.json({ success: true, message: "User registered successfully. Await admin approval." });
   } catch (err) {
     console.error(err);
@@ -110,19 +95,12 @@ app.post("/api/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.json({ success: false, message: "Invalid login" });
     if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.json({ success: false, message: "Invalid login" });
-
-    if (user.plan !== "free" && user.expiresAt) {
-      const now = new Date();
-      if (now > new Date(user.expiresAt)) {
-        user.plan = "free";
-        user.expiresAt = null;
-        await user.save();
-      }
+    if (!bcrypt.compareSync(password, user.password)) return res.json({ success: false, message: "Invalid login" });
+    if (user.plan !== "free" && user.expiresAt && new Date() > new Date(user.expiresAt)) {
+      user.plan = "free";
+      user.expiresAt = null;
+      await user.save();
     }
-
     res.json({ success: true, user: { email: user.email, role: user.role, plan: user.plan, premium: user.premium, approved: user.approved } });
   } catch (err) {
     console.error(err);
@@ -143,38 +121,42 @@ app.get("/api/all-users/:adminEmail", async (req, res) => {
   }
 });
 
-// Add slip (admin)
-app.post("/api/add-slip", async (req, res) => {
+// Approve user (admin)
+app.post("/api/approve-user", async (req, res) => {
   try {
-    const { adminEmail, slip } = req.body;
+    const { adminEmail, userEmail } = req.body;
     const admin = await User.findOne({ email: adminEmail });
     if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
-
-    const formattedGames = slip.games.map((g) => ({
-      home: g.home,
-      away: g.away,
-      odd: Number(g.odd),
-      overUnder: g.overUnder || "",
-      result: g.result || "",
-    }));
-
-    const newSlip = await Slip.create({
-      date: slip.date,
-      vip: slip.vip || false,
-      premium: slip.premium || false,
-      free: !slip.vip && !slip.premium,
-      games: formattedGames,
-      total: totalOdds(formattedGames),
-    });
-
-    res.json({ success: true, slip: newSlip });
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    user.approved = true;
+    await user.save();
+    res.json({ success: true, message: `${userEmail} approved successfully` });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Failed to add slip" });
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Activate plan (admin)
+app.post("/api/activate", async (req, res) => {
+  try {
+    const { adminEmail, userEmail, plan } = req.body;
+    const admin = await User.findOne({ email: adminEmail });
+    if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    user.plan = plan;
+    user.premium = plan !== "free";
+    user.expiresAt = plan !== "free" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+    await user.save();
+    res.json({ success: true, message: `${userEmail} activated on ${plan}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 // ===== Start Server =====
-app.listen(PORT, () => {
-  console.log(`TipStorm backend running on port ${PORT}`);
-}); 
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`TipStorm backend running on port ${PORT}`)); 
