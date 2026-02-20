@@ -1,0 +1,98 @@
+<script>
+  // 🔥 PUT YOUR REAL BACKEND URL HERE
+  const API_BASE = "https://tipstorm-backend.onrender.com/api";
+
+  async function loadUsers() {
+    const adminEmail = document.getElementById("adminEmail").value;
+    if (!adminEmail) return alert("Enter admin email");
+
+    try {
+      const res = await fetch(`${API_BASE}/all-users/${adminEmail}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message || "Failed to load users");
+        return;
+      }
+
+      const tbody = document.querySelector("#usersTable tbody");
+      tbody.innerHTML = "";
+
+      data.users.forEach(user => {
+        const tr = document.createElement("tr");
+
+        const planOptions = ["free", "weekly", "monthly", "vip"]
+          .map(plan =>
+            `<option value="${plan}" ${user.plan === plan ? "selected" : ""}>${plan}</option>`
+          ).join("");
+
+        tr.innerHTML = `
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td>
+            <select id="plan-${user.email}" ${user.role === "admin" ? "disabled" : ""}>
+              ${planOptions}
+            </select>
+          </td>
+          <td>${user.premium}</td>
+          <td>${user.approved}</td>
+          <td>
+            ${!user.approved && user.role !== "admin"
+              ? `<button onclick="approveUser('${adminEmail}','${user.email}')">Approve</button>`
+              : ""}
+            ${user.role !== "admin"
+              ? `<button onclick="activatePlan('${adminEmail}','${user.email}')">Activate Plan</button>`
+              : ""}
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      alert("Error loading users: " + err.message);
+    }
+  }
+
+  async function approveUser(adminEmail, userEmail) {
+    try {
+      const res = await fetch(`${API_BASE}/approve-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userEmail })
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      loadUsers();
+
+    } catch (err) {
+      alert("Error approving user: " + err.message);
+    }
+  }
+
+  async function activatePlan(adminEmail, userEmail) {
+    const select = document.getElementById(`plan-${userEmail}`);
+    const plan = select.value;
+
+    try {
+      const res = await fetch(`${API_BASE}/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userEmail, plan })
+      });
+
+      const data = await res.json();
+
+      if (data.success)
+        alert(`${userEmail} activated on plan: ${plan}`);
+      else
+        alert(`Failed: ${data.message}`);
+
+      loadUsers();
+
+    } catch (err) {
+      alert("Error activating plan: " + err.message);
+    }
+  }
+</script> 
