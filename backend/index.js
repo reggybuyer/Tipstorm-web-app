@@ -5,8 +5,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const path = require("path");
-const app = express();
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
@@ -19,7 +19,7 @@ app.get("/admin.html", (req, res) => {
   res.sendFile(path.join(frontendPath, "admin.html"));
 });
 
-// Fallback for React SPA
+// Fallback for React SPA (any route not matched above)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
@@ -76,11 +76,15 @@ app.get("/api", (req, res) => res.json({ message: "TipStorm backend running" }))
 app.post("/api/register", async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ success: false, message: "Email and password required" });
+    if (!email || !password)
+      return res.status(400).json({ success: false, message: "Email and password required" });
+
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ success: false, message: "User already exists" });
+
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed, role: "user" });
+
     res.json({ success: true, message: "User registered successfully. Await admin approval." });
   } catch (err) {
     console.error(err);
@@ -96,12 +100,17 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.json({ success: false, message: "Invalid login" });
     if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
     if (!bcrypt.compareSync(password, user.password)) return res.json({ success: false, message: "Invalid login" });
+
     if (user.plan !== "free" && user.expiresAt && new Date() > new Date(user.expiresAt)) {
       user.plan = "free";
       user.expiresAt = null;
       await user.save();
     }
-    res.json({ success: true, user: { email: user.email, role: user.role, plan: user.plan, premium: user.premium, approved: user.approved } });
+
+    res.json({
+      success: true,
+      user: { email: user.email, role: user.role, plan: user.plan, premium: user.premium, approved: user.approved },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -113,6 +122,7 @@ app.get("/api/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
     if (!admin || admin.role !== "admin") return res.status(401).json({ success: false, message: "Unauthorized" });
+
     const users = await User.find();
     res.json({ success: true, users });
   } catch (err) {
@@ -127,10 +137,13 @@ app.post("/api/approve-user", async (req, res) => {
     const { adminEmail, userEmail } = req.body;
     const admin = await User.findOne({ email: adminEmail });
     if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
+
     const user = await User.findOne({ email: userEmail });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
     user.approved = true;
     await user.save();
+
     res.json({ success: true, message: `${userEmail} approved successfully` });
   } catch (err) {
     console.error(err);
@@ -144,12 +157,15 @@ app.post("/api/activate", async (req, res) => {
     const { adminEmail, userEmail, plan } = req.body;
     const admin = await User.findOne({ email: adminEmail });
     if (!admin || admin.role !== "admin") return res.status(403).json({ success: false, message: "Unauthorized" });
+
     const user = await User.findOne({ email: userEmail });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
     user.plan = plan;
     user.premium = plan !== "free";
     user.expiresAt = plan !== "free" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
     await user.save();
+
     res.json({ success: true, message: `${userEmail} activated on ${plan}` });
   } catch (err) {
     console.error(err);
