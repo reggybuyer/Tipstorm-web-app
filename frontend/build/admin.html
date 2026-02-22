@@ -59,7 +59,7 @@
   </table>
 
 <script>
-  // ✅ CORRECT BACKEND URL (no /api)
+  // ✅ CORRECT BACKEND URL
   const API_BASE = "https://tipstorm-web-app-1.onrender.com";
 
   async function loadUsers() {
@@ -125,7 +125,6 @@
       const data = await res.json();
       alert(data.message);
       loadUsers();
-
     } catch (err) {
       alert("Error approving user: " + err.message);
     }
@@ -150,12 +149,8 @@
         alert(`Failed: ${data.message}`);
 
       loadUsers();
-
     } catch (err) {
       alert("Error activating plan: " + err.message);
     }
   }
-</script>
-
-</body>
-</html> 
+</script> 

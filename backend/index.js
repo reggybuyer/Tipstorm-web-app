@@ -128,7 +128,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Get all users (admin)
-app.get("/api/all-users/:adminEmail", async (req, res) => {
+app.get("/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
 
