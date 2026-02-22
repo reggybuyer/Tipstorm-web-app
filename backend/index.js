@@ -1,5 +1,3 @@
-// TipStorm Backend - index.js
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -8,7 +6,6 @@ const bcrypt = require("bcryptjs");
 const path = require("path");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
@@ -55,7 +52,7 @@ app.use(async (req, res, next) => {
 
 // ================== API ROUTES ==================
 
-// Test
+// Test route (root)
 app.get("/api", (req, res) => {
   res.json({ message: "TipStorm backend running" });
 });
@@ -64,7 +61,6 @@ app.get("/api", (req, res) => {
 app.post("/api/register", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password)
       return res.status(400).json({ success: false, message: "Email and password required" });
 
@@ -94,8 +90,8 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
+
     if (!user)
       return res.json({ success: false, message: "Invalid login" });
 
@@ -136,7 +132,6 @@ app.get("/all-users/:adminEmail", async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const users = await User.find();
-
     res.json({ success: true, users });
   } catch (err) {
     console.error(err);
@@ -182,10 +177,9 @@ app.post("/api/activate", async (req, res) => {
 
     user.plan = plan;
     user.premium = plan !== "free";
-    user.expiresAt =
-      plan !== "free"
-        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        : null;
+    user.expiresAt = plan !== "free"
+      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      : null;
 
     await user.save();
 
@@ -197,7 +191,6 @@ app.post("/api/activate", async (req, res) => {
 });
 
 // ================== SERVE FRONTEND ==================
-
 const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
 
@@ -206,7 +199,7 @@ app.get("/admin.html", (req, res) => {
   res.sendFile(path.join(frontendPath, "admin.html"));
 });
 
-// ===== React SPA fallback (MUST BE LAST) =====
+// React SPA fallback (last)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
