@@ -1,13 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>TipStorm Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h2 {
+      color: #222;
+    }
+    input, button, select {
+      padding: 6px;
+      margin: 5px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #222;
+      color: white;
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>TipStorm Admin Dashboard</h2>
+
+  <label>Admin Email:</label>
+  <input type="email" id="adminEmail" placeholder="Enter admin email" />
+  <button onclick="loadUsers()">Load Users</button>
+
+  <table id="usersTable">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Plan</th>
+        <th>Premium</th>
+        <th>Approved</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
 <script>
-  // 🔥 PUT YOUR REAL BACKEND URL HERE
-  const API_BASE = "https://tipstorm-backend.onrender.com/api";
+  // ✅ CORRECT BACKEND URL (no /api)
+  const API_BASE = "https://tipstorm-web-app-1.onrender.com";
 
   async function loadUsers() {
     const adminEmail = document.getElementById("adminEmail").value;
     if (!adminEmail) return alert("Enter admin email");
 
     try {
-      const res = await fetch(`${API_BASE}/all-users/${adminEmail}`);
+      const res = await fetch(`${API_BASE}/api/all-users/${adminEmail}`);
       const data = await res.json();
 
       if (!data.success) {
@@ -56,7 +116,7 @@
 
   async function approveUser(adminEmail, userEmail) {
     try {
-      const res = await fetch(`${API_BASE}/approve-user`, {
+      const res = await fetch(`${API_BASE}/api/approve-user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, userEmail })
@@ -76,7 +136,7 @@
     const plan = select.value;
 
     try {
-      const res = await fetch(`${API_BASE}/activate`, {
+      const res = await fetch(`${API_BASE}/api/activate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, userEmail, plan })
@@ -95,5 +155,7 @@
       alert("Error activating plan: " + err.message);
     }
   }
-</script> 
+</script>
 
+</body>
+</html> 
