@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
-// Auto-expire
+// Auto-expire premium
 app.use(async (req, res, next) => {
   const now = new Date();
   await User.updateMany(
@@ -38,7 +38,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Test
+// Test route
 app.get("/api", (req, res) => {
   res.json({ message: "TipStorm backend running" });
 });
@@ -57,7 +57,7 @@ app.post("/register", async (req, res) => {
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed, role: "user" });
 
-    res.json({ success: true, message: "User registered successfully. Await admin approval." });
+    res.json({ success: true, message: "User registered. Await admin approval." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -71,7 +71,7 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) return res.json({ success: false, message: "Invalid login" });
-    if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
+    if (!user.approved) return res.json({ success: false, message: "Account not approved" });
     if (!bcrypt.compareSync(password, user.password))
       return res.json({ success: false, message: "Invalid login" });
 
@@ -112,7 +112,7 @@ app.get("/all-users/:adminEmail", async (req, res) => {
   }
 });
 
-// Approve user (no /api prefix)
+// Approve user (no /api)
 app.post("/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
@@ -128,14 +128,14 @@ app.post("/approve-user", async (req, res) => {
     user.approved = true;
     await user.save();
 
-    res.json({ success: true, message: `${userEmail} approved successfully` });
+    res.json({ success: true, message: `${userEmail} approved` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// Activate plan (no /api prefix)
+// Activate (no /api)
 app.post("/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
@@ -150,13 +150,11 @@ app.post("/activate", async (req, res) => {
 
     user.plan = plan;
     user.premium = plan !== "free";
-    user.expiresAt = plan !== "free"
-      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      : null;
+    user.expiresAt = plan !== "free" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
 
     await user.save();
 
-    res.json({ success: true, message: `${userEmail} activated on ${plan}` });
+    res.json({ success: true, message: `${userEmail} activated` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
