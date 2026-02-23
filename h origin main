@@ -1,0 +1,53 @@
+[33mf9dc010[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix routes
+[33m29c6b3c[m fix routes
+[33m7919cd3[m fix routes
+[33m5a8be87[m fix api routes
+[33m7da98ec[m fix dashboard and backend
+[33m84e7b96[m fix dashboard and backend
+[33m299d448[m Fixed API base URL
+[33m4f312f8[m Updated project files
+[33m02901bc[m fix dashboard
+[33mc7468b5[m Clean and fix backend
+[33ma1fd2de[m Update backend routes and admin dashboard
+[33m0f848c8[m Fix admin API routes
+[33m39053fa[m Fix route order and update admin
+[33ma50513e[m Add working admin dashboard
+[33mba4d2fc[m Serve admin.html explicitly
+[33m44dee61[m Add admin.html to public folder and update frontend
+[33m09f2c44[m Rebuild frontend with admin.html fix
+[33m7506db3[m Update frontend build with admin fix
+[33mcb8ca80[m Serve admin.html explicitly
+[33md9e24be[m Fix admin API URL
+[33m6ebba7d[m Prepare backend to serve frontend and admin.html
+[33m5504146[m Move admin.html to public
+[33mda475f6[m Add backend and frontend including admin.html
+[33m1f96a9f[m Add TipStorm backend with admin dashboard support
+[33m2383fb4[m Update full TipStorm backend index.js with all routes and cron auto-expire
+[33m28908a3[m Fixed backend errors
+[33m2505f4b[m Update backend package.json for Render deploy
+[33m7c8f2a3[m Fix package.json for Render deploy
+[33m28cbf56[m Fix all syntax errors properly
+[33mabe41a9[m Fix backend syntax errors
+[33maa610d5[m Update admin panel and slip builder
+[33m36d447e[m Update Admin Panel: Add slip builder, styling fixes, backend fixes
+[33mbc1ade0[m Fixed AdminPanel API calls
+[33mdaea20f[m Update backend: new user approval & slips
+[33m30344f9[m Update backend with new user approval and slips
+[33m7aed3d7[m Updated backend URL and fixed admin panel
+[33mfac154f[m Update AdminPanel and AdminSlipBuilder: user badges, activation, approval fixes
+[33mcffb75a[m Update AdminPanel, AdminSlipBuilder, and backend index.js
+[33m3c6d2f8[m Update admin panel and slip builder: full user and subscription management
+[33md31282d[m Add AdminPanel and AdminSlipBuilder features, with user activation and approval
+[33m8ae4095[m Update AdminPanel with plan badges and user management
+[33mcf67ad0[m Updated CSS and frontend styling
+[33mbf85608[m Professional mobile UI update
+[33m56bd209[m Update frontend
+[33m2e51e07[m Update dashboard to show newly registered users
+[33md3c9c1c[m Update dashboard to show newly registered users
+[33mf204b64[m Update Dashboard for online backend with admin badges
+[33mb31219d[m Update Register.js to use Render backend URL
+[33m7ff5f15[m Update Login.js to use Render backend URL
+[33m1a8c743[m Update Dashboard API URLs to Render backend
+[33m9a10621[m Update login and register components
+[33mf1fdcef[m Fix API URL for production
+[33m9eeb4c6[m Initial commit with backend + frontend, ignored VS, builds, logs
