@@ -140,7 +140,7 @@ app.get("/all-users/:adminEmail", async (req, res) => {
 });
 
 // Approve user
-app.post("/approve-user", async (req, res) => {
+app.post("/api/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
 
@@ -163,7 +163,7 @@ app.post("/approve-user", async (req, res) => {
 });
 
 // Activate plan
-app.post("/activate", async (req, res) => {
+app.post("/api/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
 
