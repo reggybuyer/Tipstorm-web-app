@@ -61,62 +61,98 @@
 <script>
   const API_BASE = "https://tipstorm-web-app-1.onrender.com";
 
-async function loadUsers() {
-  const adminEmail = document.getElementById("adminEmail").value;
-  if (!adminEmail) return alert("Enter admin email");
+  async function loadUsers() {
+    const adminEmail = document.getElementById("adminEmail").value;
+    if (!adminEmail) return alert("Enter admin email");
 
-  const res = await fetch(`${API_BASE}/all-users/${adminEmail}`);
-  const data = await res.json();
+    try {
+      const res = await fetch(`${API_BASE}/all-users/${adminEmail}`);
+      const data = await res.json();
 
-  if (!data.success) return alert(data.message);
+      if (!data.success) {
+        alert(data.message || "Failed to load users");
+        return;
+      }
 
-  const tbody = document.querySelector("#usersTable tbody");
-  tbody.innerHTML = "";
+      const tbody = document.querySelector("#usersTable tbody");
+      tbody.innerHTML = "";
 
-  data.users.forEach(user => {
-    const tr = document.createElement("tr");
+      data.users.forEach(user => {
+        const tr = document.createElement("tr");
 
-    const plans = ["free","weekly","monthly","vip"]
-      .map(p => `<option value="${p}" ${user.plan===p?"selected":""}>${p}</option>`)
-      .join("");
+        const planOptions = ["free", "weekly", "monthly", "vip"]
+          .map(plan =>
+            `<option value="${plan}" ${user.plan === plan ? "selected" : ""}>${plan}</option>`
+          ).join("");
 
-    tr.innerHTML = `
-      <td>${user.email}</td>
-      <td>${user.role}</td>
-      <td><select id="plan-${user.email}">${plans}</select></td>
-      <td>${user.premium}</td>
-      <td>${user.approved}</td>
-      <td>
-        <button onclick="approveUser('${adminEmail}','${user.email}')">Approve</button>
-        <button onclick="activatePlan('${adminEmail}','${user.email}')">Activate</button>
-      </td>
-    `;
+        tr.innerHTML = `
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td>
+            <select id="plan-${user.email}" ${user.role === "admin" ? "disabled" : ""}>
+              ${planOptions}
+            </select>
+          </td>
+          <td>${user.premium}</td>
+          <td>${user.approved}</td>
+          <td>
+            ${!user.approved && user.role !== "admin"
+              ? `<button onclick="approveUser('${adminEmail}','${user.email}')">Approve</button>`
+              : ""}
+            ${user.role !== "admin"
+              ? `<button onclick="activatePlan('${adminEmail}','${user.email}')">Activate Plan</button>`
+              : ""}
+          </td>
+        `;
 
-    tbody.appendChild(tr);
-  });
-}
+        tbody.appendChild(tr);
+      });
 
-async function approveUser(adminEmail, userEmail) {
-  const res = await fetch(`${API_BASE}/api/approve-user`, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ adminEmail, userEmail })
-  });
-  const data = await res.json();
-  alert(data.success ? "Approved" : data.message);
-  loadUsers();
-}
+    } catch (err) {
+      alert("Error loading users: " + err.message);
+    }
+  }
 
-async function activatePlan(adminEmail, userEmail) {
-  const plan = document.getElementById(`plan-${userEmail}`).value;
+  async function approveUser(adminEmail, userEmail) {
+    try {
+      const res = await fetch(`${API_BASE}/api/approve-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userEmail })
+      });
 
-  const res = await fetch(`${API_BASE}/api/activate`, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ adminEmail, userEmail, plan })
-  });
+      const data = await res.json();
+      alert(data.message);
+      loadUsers();
 
-  const data = await res.json();
-  alert(data.success ? "Activated" : data.message);
-  loadUsers();
-} 
+    } catch (err) {
+      alert("Error approving user: " + err.message);
+    }
+  }
+
+  async function activatePlan(adminEmail, userEmail) {
+    const select = document.getElementById(`plan-${userEmail}`);
+    const plan = select.value;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail, userEmail, plan })
+      });
+
+      const data = await res.json();
+
+      if (data.success)
+        alert(`${userEmail} activated on plan: ${plan}`);
+      else
+        alert(`Failed: ${data.message}`);
+
+      loadUsers();
+
+    } catch (err) {
+      alert("Error activating plan: " + err.message);
+    }
+  }
+</script> 
+
