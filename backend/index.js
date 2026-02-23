@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
-// Auto-expire premium
+// Auto-expire premium users
 app.use(async (req, res, next) => {
   const now = new Date();
   await User.updateMany(
@@ -97,7 +97,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Get all users (admin)
+// All users
 app.get("/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
@@ -112,7 +112,7 @@ app.get("/all-users/:adminEmail", async (req, res) => {
   }
 });
 
-// Approve user (no /api)
+// Approve user (match URL)
 app.post("/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
@@ -135,7 +135,7 @@ app.post("/approve-user", async (req, res) => {
   }
 });
 
-// Activate (no /api)
+// Activate (match URL)
 app.post("/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
@@ -174,7 +174,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Start
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`TipStorm backend running on port ${PORT}`)
