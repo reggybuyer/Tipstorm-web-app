@@ -9,13 +9,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ===== MongoDB connection =====
+// MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// ===== Schemas =====
+// Schemas
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -26,21 +26,9 @@ const userSchema = new mongoose.Schema({
   expiresAt: { type: Date, default: null },
 });
 
-const slipSchema = new mongoose.Schema({
-  date: { type: String, required: true },
-  vip: { type: Boolean, default: false },
-  premium: { type: Boolean, default: false },
-  free: { type: Boolean, default: true },
-  games: [
-    { home: String, away: String, odd: Number, overUnder: String, result: String },
-  ],
-  total: Number,
-});
-
 const User = mongoose.model("User", userSchema);
-const Slip = mongoose.model("Slip", slipSchema);
 
-// ===== Auto-expire premium users =====
+// Auto-expire
 app.use(async (req, res, next) => {
   const now = new Date();
   await User.updateMany(
@@ -50,15 +38,13 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ================== API ROUTES ==================
-
-// Test route (root)
+// Test
 app.get("/api", (req, res) => {
   res.json({ message: "TipStorm backend running" });
 });
 
 // Register
-app.post("/api/register", async (req, res) => {
+app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -69,17 +55,9 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "User already exists" });
 
     const hashed = bcrypt.hashSync(password, 10);
+    await User.create({ email, password: hashed, role: "user" });
 
-    await User.create({
-      email,
-      password: hashed,
-      role: "user",
-    });
-
-    res.json({
-      success: true,
-      message: "User registered successfully. Await admin approval.",
-    });
+    res.json({ success: true, message: "User registered successfully. Await admin approval." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error" });
@@ -87,17 +65,13 @@ app.post("/api/register", async (req, res) => {
 });
 
 // Login
-app.post("/api/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user)
-      return res.json({ success: false, message: "Invalid login" });
-
-    if (!user.approved)
-      return res.json({ success: false, message: "Account not approved yet" });
-
+    if (!user) return res.json({ success: false, message: "Invalid login" });
+    if (!user.approved) return res.json({ success: false, message: "Account not approved yet" });
     if (!bcrypt.compareSync(password, user.password))
       return res.json({ success: false, message: "Invalid login" });
 
@@ -127,7 +101,6 @@ app.post("/api/login", async (req, res) => {
 app.get("/all-users/:adminEmail", async (req, res) => {
   try {
     const admin = await User.findOne({ email: req.params.adminEmail });
-
     if (!admin || admin.role !== "admin")
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
@@ -139,8 +112,8 @@ app.get("/all-users/:adminEmail", async (req, res) => {
   }
 });
 
-// Approve user
-app.post("/api/approve-user", async (req, res) => {
+// Approve user (no /api prefix)
+app.post("/approve-user", async (req, res) => {
   try {
     const { adminEmail, userEmail } = req.body;
 
@@ -162,8 +135,8 @@ app.post("/api/approve-user", async (req, res) => {
   }
 });
 
-// Activate plan
-app.post("/api/activate", async (req, res) => {
+// Activate plan (no /api prefix)
+app.post("/activate", async (req, res) => {
   try {
     const { adminEmail, userEmail, plan } = req.body;
 
@@ -190,21 +163,20 @@ app.post("/api/activate", async (req, res) => {
   }
 });
 
-// ================== SERVE FRONTEND ==================
+// Serve frontend
 const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
 
-// Serve admin.html
 app.get("/admin.html", (req, res) => {
   res.sendFile(path.join(frontendPath, "admin.html"));
 });
 
-// React SPA fallback (last)
+// SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ===== Start Server =====
+// Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`TipStorm backend running on port ${PORT}`)
