@@ -36,14 +36,19 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 
 // ===================
-// Auto Expire Premium
+// Auto Expire Premium + Fix Null Plan
 // ===================
 app.use(async (req, res, next) => {
   const now = new Date();
+
   await User.updateMany(
     { premium: true, expiresAt: { $lt: now } },
     { premium: false, plan: "free", expiresAt: null }
   );
+
+  // fix null plans
+  await User.updateMany({ plan: null }, { plan: "free" });
+
   next();
 });
 
@@ -64,7 +69,7 @@ function verifyAdmin(req, res, next) {
 
     req.user = decoded;
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ success: false, message: "Invalid token" });
   }
 }
@@ -93,7 +98,7 @@ app.post("/register", async (req, res) => {
     await User.create({ email, password: hashed });
 
     res.json({ success: true, message: "Registered. Await admin approval." });
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
@@ -104,8 +109,8 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
+
     if (!user)
       return res.json({ success: false, message: "Invalid login" });
 
@@ -132,7 +137,7 @@ app.post("/login", async (req, res) => {
         premium: user.premium,
       },
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
