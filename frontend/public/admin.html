@@ -115,7 +115,7 @@
 
   async function approveUser(adminEmail, userEmail) {
     try {
-      const res = await fetch(`${API_BASE}/api/approve-user`, {
+      const res = await fetch(`${API_BASE}/approve-user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, userEmail })
@@ -135,7 +135,7 @@
     const plan = select.value;
 
     try {
-      const res = await fetch(`${API_BASE}/api/activate`, {
+      const res = await fetch(`${API_BASE}/activate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminEmail, userEmail, plan })
