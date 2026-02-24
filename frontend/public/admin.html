@@ -1,38 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TipStorm Admin Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 10px;
-    }
-    .card {
-      background: white;
-      padding: 12px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    .badge {
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .win { background: #d4f8d4; }
-    .lost { background: #ffd6d6; }
-    .pending { background: #f2f2f2; }
-  </style>
+<meta charset="UTF-8">
+<title>TipStorm Admin Dashboard</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+  background: #f4f4f4;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+.card {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.badge {
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.win { background: #d4f8d4; }
+.lost { background: #ffd6d6; }
+.pending { background: #f2f2f2; }
+</style>
+
 </head>
 <body>
 
 <h2>TipStorm Admin Dashboard</h2>
+
 <button onclick="logout()">Logout</button>
 
 <label>Admin Email</label>
@@ -40,6 +43,7 @@
 
 <label>Password</label>
 <input type="password" id="adminPassword">
+
 <button onclick="adminLogin()">Login</button>
 
 <hr>
@@ -50,6 +54,7 @@
 <hr>
 
 <h3>Create Slip</h3>
+
 <label>Date</label>
 <input type="date" id="slipDate">
 
@@ -77,6 +82,7 @@
 <div id="slipGrid" class="grid"></div>
 
 <script>
+
 const API = "https://tipstorm-web-app-1.onrender.com";
 
 function logout() {
@@ -96,6 +102,7 @@ async function adminLogin() {
   });
 
   const data = await res.json();
+
   if (!data.success || data.user.role !== "admin") {
     alert("Admin login failed");
     return;
@@ -130,21 +137,23 @@ async function loadUsers() {
   });
 }
 
-// BET SLIPS
+// LOAD SLIPS
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
+
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
   data.slips.forEach(slip => {
+
     const div = document.createElement("div");
     div.className = "card";
 
     div.innerHTML = `
       <strong>${slip.date}</strong><br>
       Access: ${slip.access}<br>
-      Total Odds: ${slip.totalOdds.toFixed(2)}<br>
+      Total Odds: ${slip.totalOdds.toFixed(2)}
       <hr>
     `;
 
@@ -155,15 +164,11 @@ async function loadSlips() {
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result.toUpperCase()}
+            ${g.result === "win" ? "WON" : g.result.toUpperCase()}
           </span>
           <br>
-          <button onclick="updateResult('${slip._id}', ${index}, 'win')">
-            Mark WON
-          </button>
-          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">
-            Mark LOST
-          </button>
+          <button onclick="updateResult('${slip._id}', ${index}, 'win')">Mark WON</button>
+          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">Mark LOST</button>
         </div>
         <hr>
       `;
@@ -196,10 +201,12 @@ let totalOdds = 1;
 
 function updateTotalOdds() {
   totalOdds = 1;
+
   games.forEach((_, i) => {
     const odd = parseFloat(document.getElementById(`odd-${i}`).value) || 1;
     totalOdds *= odd;
   });
+
   document.getElementById("totalOddsDisplay").innerText = totalOdds.toFixed(2);
 }
 
@@ -210,20 +217,19 @@ function addGame() {
 
   const div = document.createElement("div");
   div.className = "card";
+
   div.innerHTML = `
     <label>Home</label>
     <input id="home-${index}" type="text" oninput="updateTotalOdds()">
-
     <label>Away</label>
     <input id="away-${index}" type="text" oninput="updateTotalOdds()">
-
     <label>Odd</label>
     <input id="odd-${index}" type="number" step="0.01" oninput="updateTotalOdds()">
-
     <label>Over/Under</label>
     <input id="ou-${index}" type="text">
     <hr>
   `;
+
   container.appendChild(div);
 }
 
@@ -262,9 +268,11 @@ async function createSlip() {
   });
 
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
+  loadSlips();
 }
 
 loadSlips();
+
 </script>
 </body>
 </html> 
