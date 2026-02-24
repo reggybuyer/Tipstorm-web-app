@@ -5,22 +5,9 @@
 <title>TipStorm User Dashboard</title>
 <style>
   body { font-family: Arial; padding: 15px; background: #f4f4f4; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-  }
-  .card {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  }
-  .badge {
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .badge { padding: 4px 6px; border-radius: 4px; font-size: 12px; }
   .free { background: #d4f8d4; }
   .vip { background: #ffd6d6; }
 </style>
@@ -49,7 +36,7 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
-// LOAD ALL SLIPS (no plan filter here)
+// LOAD SLIPS
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
@@ -72,17 +59,18 @@ async function loadSlips() {
 
     // SHOW GAMES
     slip.games.forEach(g => {
-  card.innerHTML += `
-    <div>
-      <strong>${g.home} vs ${g.away}</strong><br>
-      Odd: ${g.odd}<br>
-      <span class="badge ${g.result}">
-        ${g.result.toUpperCase()}
-      </span>
-    </div>
-    <hr>
-  `;
-}); 
+      card.innerHTML += `
+        <div>
+          <strong>${g.home} vs ${g.away}</strong><br>
+          Odd: ${g.odd}<br>
+          Over/Under: ${g.overUnder || "N/A"}<br>
+          <span class="badge ${g.result}">
+            ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
+          </span>
+        </div>
+        <hr>
+      `;
+    });
 
     grid.appendChild(card);
   });
@@ -90,17 +78,16 @@ async function loadSlips() {
 
 // RESULT BADGE
 function resultBadge(result) {
-  if (result === "win") return `<span class="badge free">WIN 🟢</span>`;
+  if (result === "win") return `<span class="badge free">WON 🟢</span>`;
   if (result === "lost") return `<span class="badge vip">LOST 🔴</span>`;
   return `<span class="badge">PENDING ⚪</span>`;
 }
 
-// FILTER BY DATE
+// FILTER
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const res = await fetch(`${API}/slips?date=${date}`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 

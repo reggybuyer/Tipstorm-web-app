@@ -1,45 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TipStorm Admin Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-
-    h2 { color: #222; }
-
-    .section {
-      margin-bottom: 20px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 10px;
-    }
-
-    .card {
-      background: white;
-      padding: 12px;
-      border-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-
-    button, input, select {
-      padding: 6px;
-      margin: 4px 0;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>TipStorm Admin Dashboard</title>
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f4f4f4;
+  }
+  h2 { color: #222; }
+  .section { margin-bottom: 20px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+  }
+  .card {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .badge {
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .win { background: #d4f8d4; }
+  .lost { background: #ffd6d6; }
+  .pending { background: #f2f2f2; }
+  button, input, select {
+    padding: 6px;
+    margin: 4px 0;
+  }
+</style>
 </head>
-
 <body>
 
 <h2>TipStorm Admin Dashboard</h2>
-
 <button onclick="logout()">Logout</button>
 
 <div class="section">
@@ -116,7 +115,6 @@ async function adminLogin() {
   });
 
   const data = await res.json();
-
   if (!data.success || data.user.role !== "admin") {
     alert("Admin login failed");
     return;
@@ -151,9 +149,9 @@ async function loadUsers() {
   });
 }
 
-//  SLIPS(CARDS)
+/* SLIPS (cards with games) */
 async function loadSlips() {
-  const res = await fetch(`${API}/slips?plan=vip`);
+  const res = await fetch(`${API}/slips`);
   const data = await res.json();
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
@@ -177,8 +175,9 @@ async function loadSlips() {
         <div>
           <strong>${g.home} vs ${g.away}</strong><br>
           Odd: ${g.odd}<br>
+          Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result.toUpperCase()}
+            ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
           </span>
         </div>
         <hr>
@@ -187,8 +186,7 @@ async function loadSlips() {
 
     grid.appendChild(div);
   });
-} 
-
+}
 
 /* CREATE SLIP */
 let games = [];
@@ -200,7 +198,6 @@ function updateTotalOdds() {
     const odd = parseFloat(document.getElementById(`odd-${i}`).value) || 1;
     totalOdds *= odd;
   });
-
   document.getElementById("totalOddsDisplay").innerText = totalOdds.toFixed(2);
 }
 
@@ -226,14 +223,12 @@ function addGame() {
 
     <hr>
   `;
-
   container.appendChild(div);
 }
 
 async function createSlip() {
   const date = document.getElementById("slipDate").value;
   const access = document.getElementById("access").value;
-
   let builtGames = [];
 
   games.forEach((_, i) => {
@@ -243,7 +238,13 @@ async function createSlip() {
     const ou = document.getElementById(`ou-${i}`).value;
 
     if (home && away && odd) {
-      builtGames.push({ home, away, odd, overUnder: ou, result: "pending" });
+      builtGames.push({
+        home,
+        away,
+        odd,
+        overUnder: ou,
+        result: "pending"
+      });
     }
   });
 
@@ -261,6 +262,7 @@ async function createSlip() {
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
 }
 
+/* LOAD SLIPS */
 loadSlips();
 </script>
 
