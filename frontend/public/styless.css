@@ -35,9 +35,34 @@ h2, h3 {
 
 .free { background: #d4f8d4; }
 .vip { background: #ffd6d6; }
+
 .win { background: #d4f8d4; }
 .lost { background: #ffd6d6; }
 .pending { background: #f2f2f2; }
+
+/* ===== RESULT BADGES ===== */
+.result-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.result-badge.win { background: #d4f8d4; }
+.result-badge.lost { background: #ffd6d6; }
+.result-badge.pending { background: #f2f2f2; }
+
+/* ===== LOCKED ===== */
+.locked {
+  opacity: 0.6;
+}
+
+.locked-message {
+  background: #111;
+  color: #ffcc00;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+}
 
 /* ===== INPUTS & BUTTONS ===== */
 input, button, select {
@@ -57,32 +82,6 @@ button:hover {
   background: #444;
 }
 
-/* ===== SECTION BOX ===== */
-.section {
-  margin-top: 20px;
-  background: white;
-  padding: 15px;
-  border-radius: 6px;
-}
-
-/* ===== TABLES (admin) ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-th {
-  background: #222;
-  color: white;
-}
-
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 600px) {
   .grid {
@@ -91,9 +90,5 @@ th {
 
   body {
     padding: 10px;
-  }
-
-  table {
-    font-size: 12px;
   }
 } 

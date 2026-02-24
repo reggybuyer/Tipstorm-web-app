@@ -1,26 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>TipStorm Dashboard</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>TipStorm Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    #paymentPopup {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
 
-<style>
-#paymentPopup {
-  display: none;
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  z-index: 999;
-}
-.locked { opacity: 0.6; }
-</style>
+    .locked {
+      opacity: 0.6;
+    }
 
+    .locked-message {
+      background: #111;
+      color: #ffcc00;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
@@ -60,15 +70,13 @@
 </div>
 
 <script>
-
 const API = "https://tipstorm-web-app-1.onrender.com";
 
 // LOAD SLIPS
 async function loadSlips() {
   const plan = document.getElementById("plan").value;
-  const res = await fetch(`${API}/slips`);
+  const res = await fetch(`${API}/slips?plan=${plan}`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -78,7 +86,6 @@ async function loadSlips() {
   }
 
   data.slips.forEach(slip => {
-
     const card = document.createElement("div");
     card.className = "card";
 
@@ -100,8 +107,9 @@ async function loadSlips() {
     if (isLocked) {
       card.classList.add("locked");
       card.innerHTML += `
-        <p>Premium slip (locked)</p>
-        <button onclick="showPopup()">Unlock Access</button>
+        <div class="locked-message">
+          🔒 Premium slip — upgrade to view games and results.
+        </div>
       `;
     } else {
       slip.games.forEach(g => {
@@ -111,7 +119,7 @@ async function loadSlips() {
             Odd: ${g.odd}<br>
             Over/Under: ${g.overUnder || "N/A"}<br>
             <span class="badge ${g.result}">
-              ${g.result === "win" ? "WON" : g.result.toUpperCase()}
+              ${g.result.toUpperCase()}
             </span>
           </div>
           <hr>
@@ -128,7 +136,6 @@ async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const res = await fetch(`${API}/slips?date=${date}`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -152,12 +159,13 @@ async function filterDate() {
 function showPopup() {
   document.getElementById("paymentPopup").style.display = "block";
 }
+
 function closePopup() {
   document.getElementById("paymentPopup").style.display = "none";
 }
 
 loadSlips();
-
 </script>
+
 </body>
 </html> 
