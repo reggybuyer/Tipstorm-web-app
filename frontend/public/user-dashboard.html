@@ -1,43 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TipStorm User Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 15px;
-      background: #f4f4f4;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 10px;
-    }
-
-    .card {
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-
-    .badge {
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    .win { background: #d4f8d4; }
-    .lost { background: #ffd6d6; }
-    .pending { background: #f2f2f2; }
-
-    button, input {
-      padding: 6px;
-      margin: 4px 0;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>TipStorm User Dashboard</title>
+<style>
+  body { font-family: Arial; padding: 15px; background: #f4f4f4; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .badge { padding: 4px 6px; border-radius: 4px; font-size: 12px; }
+  .free { background: #d4f8d4; }
+  .vip { background: #ffd6d6; }
+</style>
 </head>
 <body>
 
@@ -63,12 +36,10 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
-// LOAD SLIPS (grid cards)
 async function loadSlips() {
   const plan = document.getElementById("plan").value;
   const res = await fetch(`${API}/slips?plan=${plan}`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -76,9 +47,12 @@ async function loadSlips() {
     const card = document.createElement("div");
     card.className = "card";
 
+    const badge = slip.access === "free"
+      ? `<span class="badge free">FREE</span>`
+      : `<span class="badge vip">PREMIUM</span>`;
+
     card.innerHTML = `
-      <strong>${slip.date}</strong><br>
-      Access: ${slip.access}<br>
+      <strong>${slip.date}</strong> ${badge}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
       <hr>
     `;
@@ -98,38 +72,30 @@ async function loadSlips() {
   });
 }
 
-// RESULT BADGE
 function resultBadge(result) {
-  if (result === "win") return `<span class="badge win">WIN 🟢</span>`;
-  if (result === "lost") return `<span class="badge lost">LOST 🔴</span>`;
-  return `<span class="badge pending">PENDING ⚪</span>`;
+  if (result === "win") return `<span class="badge free">WIN 🟢</span>`;
+  if (result === "lost") return `<span class="badge vip">LOST 🔴</span>`;
+  return `<span class="badge">PENDING ⚪</span>`;
 }
 
-// FILTER BY DATE
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const plan = document.getElementById("plan").value;
-
   const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
   data.slips.forEach(slip => {
     const card = document.createElement("div");
     card.className = "card";
-
     card.innerHTML = `
       <strong>${slip.date}</strong><br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
     `;
-
     grid.appendChild(card);
   });
 }
-
 </script>
-
 </body>
 </html> 

@@ -163,17 +163,22 @@ app.post("/slips", async (req, res) => {
 app.get("/slips", async (req, res) => {
   const { plan, date } = req.query;
   let query = {};
+
   if (date) query.date = date;
 
   const slips = await Slip.find(query);
 
   const visible = slips.filter(slip => {
     if (slip.access === "free") return true;
-    return plan && (plan === slip.access || plan === "vip");
+    if (!plan) return false;
+
+    // user plan can access same or lower
+    return plan === slip.access || (plan === "vip");
   });
 
   res.json({ success: true, slips: visible });
-});
+}); 
+
 
 // Update result
 app.post("/slip-result", async (req, res) => {
