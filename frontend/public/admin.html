@@ -20,7 +20,7 @@
     background: white;
     padding: 12px;
     border-radius: 6px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
   .badge {
     padding: 4px 6px;
@@ -44,10 +44,8 @@
 <div class="section">
   <label>Admin Email</label>
   <input type="email" id="adminEmail">
-
   <label>Password</label>
   <input type="password" id="adminPassword">
-
   <button onclick="adminLogin()">Login</button>
 </div>
 
@@ -62,7 +60,6 @@
 
 <div class="section">
   <h3>Create Slip</h3>
-
   <label>Date</label>
   <input type="date" id="slipDate">
 
@@ -91,7 +88,7 @@
 <hr>
 
 <div class="section">
-  <h3>Slip Results</h3>
+  <h3>Slip Results (Mark WIN/LOST)</h3>
   <div id="slipGrid" class="grid"></div>
 </div>
 
@@ -149,7 +146,7 @@ async function loadUsers() {
   });
 }
 
-/* SLIPS (cards with games) */
+/* SLIPS (with games & result buttons) */
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
@@ -160,17 +157,14 @@ async function loadSlips() {
     const div = document.createElement("div");
     div.className = "card";
 
-    const badge = slip.access === "free"
-      ? `<span class="badge free">FREE</span>`
-      : `<span class="badge vip">PREMIUM</span>`;
-
     div.innerHTML = `
-      <strong>${slip.date}</strong> ${badge}<br>
+      <strong>${slip.date}</strong><br>
+      Access: ${slip.access}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
       <hr>
     `;
 
-    slip.games.forEach(g => {
+    slip.games.forEach((g, index) => {
       div.innerHTML += `
         <div>
           <strong>${g.home} vs ${g.away}</strong><br>
@@ -179,6 +173,13 @@ async function loadSlips() {
           <span class="badge ${g.result}">
             ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
           </span>
+          <br>
+          <button onclick="updateResult('${slip._id}', ${index}, 'win')">
+            Mark WON
+          </button>
+          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">
+            Mark LOST
+          </button>
         </div>
         <hr>
       `;
@@ -186,6 +187,23 @@ async function loadSlips() {
 
     grid.appendChild(div);
   });
+}
+
+/* UPDATE RESULT */
+async function updateResult(slipId, gameIndex, result) {
+  const token = localStorage.getItem("token");
+
+  await fetch(`${API}/slip-result`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ slipId, gameIndex, result })
+  });
+
+  alert("Result updated");
+  loadSlips();
 }
 
 /* CREATE SLIP */
@@ -229,6 +247,7 @@ function addGame() {
 async function createSlip() {
   const date = document.getElementById("slipDate").value;
   const access = document.getElementById("access").value;
+
   let builtGames = [];
 
   games.forEach((_, i) => {
@@ -262,7 +281,6 @@ async function createSlip() {
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
 }
 
-/* LOAD SLIPS */
 loadSlips();
 </script>
 
