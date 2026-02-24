@@ -1,40 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>TipStorm Admin Dashboard</title>
-<style>
-  body {
-    font-family: Arial;
-    padding: 20px;
-    background: #f4f4f4;
-  }
-  h2 { color: #222; }
-  .section { margin-bottom: 20px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 10px;
-  }
-  .card {
-    background: white;
-    padding: 12px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
-  .badge {
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-  .win { background: #d4f8d4; }
-  .lost { background: #ffd6d6; }
-  .pending { background: #f2f2f2; }
-  button, input, select {
-    padding: 6px;
-    margin: 4px 0;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>TipStorm Admin Dashboard</title>
+
+  <!-- LINK CSS -->
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
@@ -44,8 +15,10 @@
 <div class="section">
   <label>Admin Email</label>
   <input type="email" id="adminEmail">
+
   <label>Password</label>
   <input type="password" id="adminPassword">
+
   <button onclick="adminLogin()">Login</button>
 </div>
 
@@ -60,6 +33,7 @@
 
 <div class="section">
   <h3>Create Slip</h3>
+
   <label>Date</label>
   <input type="date" id="slipDate">
 
@@ -87,7 +61,6 @@
 
 <hr>
 
-<!-- BET SLIP (handles results) -->
 <div class="section">
   <h3>Bet Slip (Mark Results)</h3>
   <div id="slipGrid" class="grid"></div>
@@ -157,12 +130,10 @@ async function loadSlips() {
   data.slips.forEach(slip => {
     const div = document.createElement("div");
     div.className = "card";
-    const badge = slip.access === "free"
-      ? `<span class="badge free">FREE</span>`
-      : `<span class="badge vip">PREMIUM</span>`;
 
     div.innerHTML = `
-      <strong>${slip.date}</strong> ${badge}<br>
+      <strong>${slip.date}</strong><br>
+      Access: ${slip.access}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
       <hr>
     `;
@@ -174,15 +145,8 @@ async function loadSlips() {
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result.toUpperCase()}
+            ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
           </span>
-          <br>
-          <button onclick="updateResult('${slip._id}', ${index}, 'win')">
-            Mark WON
-          </button>
-          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">
-            Mark LOST
-          </button>
         </div>
         <hr>
       `;
@@ -195,6 +159,7 @@ async function loadSlips() {
 /* UPDATE RESULT */
 async function updateResult(slipId, gameIndex, result) {
   const token = localStorage.getItem("token");
+
   await fetch(`${API}/slip-result`, {
     method: "POST",
     headers: {
@@ -240,9 +205,9 @@ function addGame() {
 
     <label>Over/Under</label>
     <input id="ou-${index}" type="text">
-
     <hr>
   `;
+
   container.appendChild(div);
 }
 
@@ -258,13 +223,7 @@ async function createSlip() {
     const ou = document.getElementById(`ou-${i}`).value;
 
     if (home && away && odd) {
-      builtGames.push({
-        home,
-        away,
-        odd,
-        overUnder: ou,
-        result: "pending"
-      });
+      builtGames.push({ home, away, odd, overUnder: ou, result: "pending" });
     }
   });
 
@@ -282,7 +241,6 @@ async function createSlip() {
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
 }
 
-/* INITIAL */
 loadSlips();
 </script>
 

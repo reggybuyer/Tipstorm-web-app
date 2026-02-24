@@ -1,16 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>TipStorm User Dashboard</title>
-<style>
-  body { font-family: Arial; padding: 15px; background: #f4f4f4; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-  .card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-  .badge { padding: 4px 6px; border-radius: 4px; font-size: 12px; }
-  .free { background: #d4f8d4; }
-  .vip { background: #ffd6d6; }
-</style>
+  <meta charset="UTF-8">
+  <title>TipStorm User Dashboard</title>
+
+  <!-- CSS -->
+  <style>
+    body {
+      font-family: Arial;
+      padding: 15px;
+      background: #f4f4f4;
+      color: #222;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .badge {
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .free { background: #d4f8d4; }
+    .vip { background: #ffd6d6; }
+    .win { background: #d4f8d4; }
+    .lost { background: #ffd6d6; }
+    .pending { background: #f2f2f2; }
+  </style>
 </head>
 <body>
 
@@ -57,7 +88,7 @@ async function loadSlips() {
       <hr>
     `;
 
-    // SHOW GAMES
+    // SHOW GAMES + RESULTS
     slip.games.forEach(g => {
       card.innerHTML += `
         <div>
@@ -65,7 +96,7 @@ async function loadSlips() {
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
+            ${g.result === "win" ? "WON" : g.result.toUpperCase()}
           </span>
         </div>
         <hr>
@@ -76,14 +107,7 @@ async function loadSlips() {
   });
 }
 
-// RESULT BADGE
-function resultBadge(result) {
-  if (result === "won") return `<span class="badge free">WON 🟢</span>`;
-  if (result === "lost") return `<span class="badge vip">LOST 🔴</span>`;
-  return `<span class="badge">PENDING ⚪</span>`;
-}
-
-// FILTER
+// FILTER BY DATE
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const res = await fetch(`${API}/slips?date=${date}`);
@@ -101,6 +125,8 @@ async function filterDate() {
     grid.appendChild(card);
   });
 }
+
+loadSlips();
 </script>
 
 </body>
