@@ -70,6 +70,7 @@ app.use(async (req, res, next) => {
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
   const exists = await User.findOne({ email });
+
   if (exists)
     return res.status(400).json({ success: false, message: "User exists" });
 
@@ -111,7 +112,7 @@ app.get("/all-users", async (req, res) => {
   res.json({ success: true, users });
 });
 
-// Subscription request (user sends payment info)
+// Subscription request (payment info)
 app.post("/request-subscription", async (req, res) => {
   const { email, plan, phone, message } = req.body;
 
@@ -120,7 +121,7 @@ app.post("/request-subscription", async (req, res) => {
   res.json({ success: true, message: "Request sent. Await activation." });
 });
 
-// Requests (admin view)
+// Requests (admin)
 app.get("/subscription-requests", async (req, res) => {
   const requests = await SubscriptionRequest.find();
   res.json({ success: true, requests });
