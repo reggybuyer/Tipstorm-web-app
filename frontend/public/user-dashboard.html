@@ -30,10 +30,12 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
-// LOAD SLIPS
+// LOAD SLIPS (send plan)
 async function loadSlips() {
-  const res = await fetch(`${API}/slips`);
+  const plan = document.getElementById("plan").value;
+  const res = await fetch(`${API}/slips?plan=${plan}`);
   const data = await res.json();
+
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -69,11 +71,14 @@ async function loadSlips() {
   });
 }
 
-// FILTER
+// FILTER BY DATE (send plan)
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
-  const res = await fetch(`${API}/slips?date=${date}`);
+  const plan = document.getElementById("plan").value;
+
+  const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
   const data = await res.json();
+
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
