@@ -72,15 +72,17 @@ async function loadSlips() {
 
     // SHOW GAMES
     slip.games.forEach(g => {
-      card.innerHTML += `
-        <div>
-          ${g.home} vs ${g.away}<br>
-          Odd: ${g.odd}<br>
-          ${resultBadge(g.result)}
-        </div>
-        <hr>
-      `;
-    });
+  card.innerHTML += `
+    <div>
+      <strong>${g.home} vs ${g.away}</strong><br>
+      Odd: ${g.odd}<br>
+      <span class="badge ${g.result}">
+        ${g.result.toUpperCase()}
+      </span>
+    </div>
+    <hr>
+  `;
+}); 
 
     grid.appendChild(card);
   });
