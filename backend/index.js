@@ -26,7 +26,6 @@ const userSchema = new mongoose.Schema({
   plan: { type: String, default: "free" },
   expiresAt: { type: Date, default: null },
 });
-
 const User = mongoose.model("User", userSchema);
 
 // Subscription request
@@ -38,7 +37,6 @@ const requestSchema = new mongoose.Schema({
   status: { type: String, default: "pending" },
   createdAt: { type: Date, default: Date.now },
 });
-
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
 // Slip
@@ -56,7 +54,6 @@ const slipSchema = new mongoose.Schema({
     }
   ]
 });
-
 const Slip = mongoose.model("Slip", slipSchema);
 
 // Auto expire premium
@@ -86,6 +83,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
+
   if (!user) return res.json({ success: false, message: "Invalid login" });
 
   const match = bcrypt.compareSync(password, user.password);
@@ -113,14 +111,16 @@ app.get("/all-users", async (req, res) => {
   res.json({ success: true, users });
 });
 
-// Subscription request
+// Subscription request (user sends payment info)
 app.post("/request-subscription", async (req, res) => {
   const { email, plan, phone, message } = req.body;
+
   await SubscriptionRequest.create({ email, plan, phone, message });
-  res.json({ success: true, message: "Request sent" });
+
+  res.json({ success: true, message: "Request sent. Await activation." });
 });
 
-// Requests (admin)
+// Requests (admin view)
 app.get("/subscription-requests", async (req, res) => {
   const requests = await SubscriptionRequest.find();
   res.json({ success: true, requests });
@@ -129,8 +129,8 @@ app.get("/subscription-requests", async (req, res) => {
 // Approve request (manual activation)
 app.post("/approve-request", async (req, res) => {
   const { requestId } = req.body;
-
   const reqDoc = await SubscriptionRequest.findById(requestId);
+
   if (!reqDoc) return res.status(404).json({ success: false });
 
   const user = await User.findOne({ email: reqDoc.email });
@@ -147,13 +147,12 @@ app.post("/approve-request", async (req, res) => {
   reqDoc.status = "approved";
   await reqDoc.save();
 
-  res.json({ success: true });
+  res.json({ success: true, message: "User activated" });
 });
 
 // Create slip
 app.post("/slips", async (req, res) => {
-  const { date, games, access } = req.body;
-  const totalOdds = games.reduce((acc, g) => acc * g.odd, 1);
+  const { date, games, access, totalOdds } = req.body;
 
   const slip = await Slip.create({ date, games, access, totalOdds });
   res.json({ success: true, slip });
@@ -162,7 +161,6 @@ app.post("/slips", async (req, res) => {
 // Get slips (filter by plan)
 app.get("/slips", async (req, res) => {
   const { plan, date } = req.query;
-
   let query = {};
   if (date) query.date = date;
 
@@ -179,8 +177,8 @@ app.get("/slips", async (req, res) => {
 // Update result
 app.post("/slip-result", async (req, res) => {
   const { slipId, gameIndex, result } = req.body;
-
   const slip = await Slip.findById(slipId);
+
   if (!slip) return res.status(404).json({ success: false });
 
   slip.games[gameIndex].result = result;
@@ -192,7 +190,6 @@ app.post("/slip-result", async (req, res) => {
 // Serve frontend
 const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
-
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
