@@ -21,14 +21,13 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // ===================
-// Schema
+// Schema (no approval)
 // ===================
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   premium: { type: Boolean, default: false },
-  approved: { type: Boolean, default: false },
   plan: { type: String, default: "free" },
   expiresAt: { type: Date, default: null },
 });
@@ -46,19 +45,18 @@ app.use(async (req, res, next) => {
     { premium: false, plan: "free", expiresAt: null }
   );
 
-  // fix null plans
   await User.updateMany({ plan: null }, { plan: "free" });
 
   next();
 });
 
 // ===================
-// JWT Middleware
+// JWT Middleware (admin only)
 // ===================
 function verifyAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader)
-    return res.status(401).json({ success: false, message: "No token provided" });
+    return res.status(401).json({ success: false, message: "No token" });
 
   const token = authHeader.split(" ")[1];
 
@@ -82,7 +80,7 @@ app.get("/api", (req, res) => {
 });
 
 // ===================
-// Register
+// Register (immediate login allowed)
 // ===================
 app.post("/register", async (req, res) => {
   try {
@@ -97,14 +95,14 @@ app.post("/register", async (req, res) => {
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed });
 
-    res.json({ success: true, message: "Registered. Await admin approval." });
+    res.json({ success: true, message: "Registered. You can login now." });
   } catch {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 // ===================
-// Login
+// Login (no approval)
 // ===================
 app.post("/login", async (req, res) => {
   try {
@@ -113,9 +111,6 @@ app.post("/login", async (req, res) => {
 
     if (!user)
       return res.json({ success: false, message: "Invalid login" });
-
-    if (!user.approved)
-      return res.json({ success: false, message: "Account not approved" });
 
     const match = bcrypt.compareSync(password, user.password);
     if (!match)
@@ -143,7 +138,7 @@ app.post("/login", async (req, res) => {
 });
 
 // ===================
-// Get All Users (Admin)
+// Get All Users (admin)
 // ===================
 app.get("/all-users", verifyAdmin, async (req, res) => {
   const users = await User.find();
@@ -151,23 +146,7 @@ app.get("/all-users", verifyAdmin, async (req, res) => {
 });
 
 // ===================
-// Approve User (Admin)
-// ===================
-app.post("/approve-user", verifyAdmin, async (req, res) => {
-  const { userEmail } = req.body;
-
-  const user = await User.findOne({ email: userEmail });
-  if (!user)
-    return res.status(404).json({ success: false, message: "User not found" });
-
-  user.approved = true;
-  await user.save();
-
-  res.json({ success: true, message: "User approved" });
-});
-
-// ===================
-// Activate Plan (Admin)
+// Activate Plan (premium)
 // ===================
 app.post("/activate", verifyAdmin, async (req, res) => {
   const { userEmail, plan } = req.body;
@@ -176,11 +155,16 @@ app.post("/activate", verifyAdmin, async (req, res) => {
   if (!user)
     return res.status(404).json({ success: false, message: "User not found" });
 
+  let duration = 0;
+  if (plan === "weekly") duration = 7;
+  if (plan === "monthly") duration = 30;
+  if (plan === "vip") duration = 30;
+
   user.plan = plan;
   user.premium = plan !== "free";
   user.expiresAt =
     plan !== "free"
-      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      ? new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
       : null;
 
   await user.save();

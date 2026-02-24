@@ -2,178 +2,135 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>TipStorm Admin Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-    h2 { color: #222; }
-    input, button, select {
-      padding: 6px;
-      margin: 5px 0;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      background: white;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background: #222;
-      color: white;
-    }
-  </style>
+  <title>Admin Dashboard</title>
 </head>
 <body>
+<h2>Admin Dashboard</h2>
 
-  <h2>TipStorm Admin Dashboard</h2>
+<input type="email" id="email" placeholder="Admin Email" />
+<input type="password" id="password" placeholder="Password" />
+<button onclick="login()">Login</button>
 
-  <label>Admin Email (for login only):</label>
-  <input type="email" id="adminEmail" placeholder="Enter admin email" />
-  <input type="password" id="adminPassword" placeholder="Password" />
-  <button onclick="adminLogin()">Login</button>
+<hr>
 
-  <hr>
+<input type="text" id="search" placeholder="Search user..." onkeyup="filterUsers()" />
+<button onclick="loadUsers()">Load Users</button>
 
-  <button onclick="loadUsers()">Load Users</button>
-
-  <table id="usersTable">
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Plan</th>
-        <th>Premium</th>
-        <th>Approved</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Plan</th>
+      <th>Premium</th>
+      <th>Expiry</th>
+      <th>Change</th>
+    </tr>
+  </thead>
+  <tbody id="usersBody"></tbody>
+</table>
 
 <script>
-const API_BASE = "https://tipstorm-web-app-1.onrender.com";
+const API = "https://tipstorm-web-app-1.onrender.com";
+let allUsers = [];
 
-// ===== LOGIN =====
-async function adminLogin() {
-  const email = document.getElementById("adminEmail").value;
-  const password = document.getElementById("adminPassword").value;
-
-  try {
-    const res = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-    if (!data.success || data.user.role !== "admin") {
-      alert("Admin login failed");
-      return;
-    }
-
-    localStorage.setItem("token", data.token);
-    alert("Admin logged in");
-  } catch (err) {
-    alert("Login error: " + err.message);
-  }
+function getToken() {
+  return localStorage.getItem("token");
 }
 
-// ===== LOAD USERS =====
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(`${API}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (!data.success || data.user.role !== "admin") {
+    alert("Admin login failed");
+    return;
+  }
+
+  localStorage.setItem("token", data.token);
+  alert("Logged in");
+}
+
 async function loadUsers() {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (!token) return alert("Login first");
 
-  try {
-    const res = await fetch(`${API_BASE}/all-users`, {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
-    });
+  const res = await fetch(`${API}/all-users`, {
+    headers: { "Authorization": `Bearer ${token}` }
+  });
 
-    const data = await res.json();
-    if (!data.success) {
-      alert(data.message);
-      return;
-    }
+  const data = await res.json();
+  if (!data.success) return alert(data.message);
 
-    const tbody = document.querySelector("#usersTable tbody");
-    tbody.innerHTML = "";
-
-    data.users.forEach(user => {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${user.email}</td>
-        <td>${user.role}</td>
-        <td>${user.plan}</td>
-        <td>${user.premium}</td>
-        <td>${user.approved}</td>
-        <td>
-          ${!user.approved ? `<button onclick="approveUser('${user.email}')">Approve</button>` : ""}
-          <button onclick="activateUser('${user.email}')">Activate</button>
-        </td>
-      `;
-
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    alert("Error loading users: " + err.message);
-  }
+  allUsers = data.users;
+  renderUsers(allUsers);
 }
 
-// ===== APPROVE =====
-async function approveUser(email) {
-  const token = localStorage.getItem("token");
+function renderUsers(users) {
+  const tbody = document.getElementById("usersBody");
+  tbody.innerHTML = "";
 
-  try {
-    const res = await fetch(`${API_BASE}/approve-user`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ userEmail: email })
-    });
+  users.forEach(user => {
+    const plan = user.plan || "free";
+    const expiry = user.expiresAt
+      ? new Date(user.expiresAt).toLocaleDateString()
+      : "-";
 
-    const data = await res.json();
-    alert(data.message);
-    loadUsers();
-  } catch (err) {
-    alert("Error approving: " + err.message);
-  }
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${user.email}</td>
+      <td>${user.role}</td>
+      <td>${plan}</td>
+      <td>${user.premium ? "YES" : "NO"}</td>
+      <td>${expiry}</td>
+      <td>
+        <select id="plan-${user.email}">
+          <option value="free">free</option>
+          <option value="weekly">weekly</option>
+          <option value="monthly">monthly</option>
+          <option value="vip">vip</option>
+        </select>
+        <button onclick="activate('${user.email}')">Update</button>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
 }
 
-// ===== ACTIVATE =====
-async function activateUser(email) {
-  const token = localStorage.getItem("token");
-  const plan = "free";
+function filterUsers() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    u.email.toLowerCase().includes(search)
+  );
+  renderUsers(filtered);
+}
 
-  try {
-    const res = await fetch(`${API_BASE}/activate`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ userEmail: email, plan })
-    });
+async function activate(email) {
+  const token = getToken();
+  const plan = document.getElementById(`plan-${email}`).value;
 
-    const data = await res.json();
-    alert(data.message);
-    loadUsers();
-  } catch (err) {
-    alert("Error activating: " + err.message);
-  }
+  const res = await fetch(`${API}/activate`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ userEmail: email, plan })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+  loadUsers();
 }
 </script>
-
 </body>
 </html> 
