@@ -3,37 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>TipStorm User Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 15px;
-      background: #f4f4f4;
-      color: #222;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 10px;
-    }
-    .card {
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    .badge {
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .free { background: #d4f8d4; }
-    .vip { background: #ffd6d6; }
-    .win { background: #d4f8d4; }
-    .lost { background: #ffd6d6; }
-    .pending { background: #f2f2f2; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <h2>TipStorm Dashboard</h2>
 
 <label>Email</label>
@@ -49,6 +22,7 @@
 
 <button onclick="loadSlips()">Load Slips</button>
 <button onclick="filterDate()">Filter by Date</button>
+
 <input type="date" id="filterDate">
 
 <div id="slipGrid" class="grid"></div>
@@ -84,7 +58,7 @@ async function loadSlips() {
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result === "win" ? "WON" : g.result.toUpperCase()}
+            ${g.result.toUpperCase()}
           </span>
         </div>
         <hr>
@@ -95,7 +69,7 @@ async function loadSlips() {
   });
 }
 
-// FILTER BY DATE
+// FILTER
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const res = await fetch(`${API}/slips?date=${date}`);
@@ -116,5 +90,6 @@ async function filterDate() {
 
 loadSlips();
 </script>
+
 </body>
 </html> 
