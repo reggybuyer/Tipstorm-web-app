@@ -1,136 +1,270 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Dashboard</title>
+  <meta charset="UTF-8">
+  <title>TipStorm Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h2 { color: #222; }
+    input, button, select, textarea {
+      padding: 6px;
+      margin: 4px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #222;
+      color: white;
+    }
+    .section {
+      margin-top: 25px;
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-<h2>Admin Dashboard</h2>
 
-<input type="email" id="email" placeholder="Admin Email" />
-<input type="password" id="password" placeholder="Password" />
-<button onclick="login()">Login</button>
+<h2>TipStorm Admin Dashboard</h2>
 
-<hr>
+<label>Admin Email</label>
+<input type="email" id="adminEmail" placeholder="admin email">
+<button onclick="loadAll()">Load Dashboard</button>
 
-<input type="text" id="search" placeholder="Search user..." onkeyup="filterUsers()" />
-<button onclick="loadUsers()">Load Users</button>
+<!-- Users -->
+<div class="section">
+  <h3>Users</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Plan</th>
+        <th>Premium</th>
+      </tr>
+    </thead>
+    <tbody id="usersBody"></tbody>
+  </table>
+</div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Email</th>
-      <th>Role</th>
-      <th>Plan</th>
-      <th>Premium</th>
-      <th>Expiry</th>
-      <th>Change</th>
-    </tr>
-  </thead>
-  <tbody id="usersBody"></tbody>
-</table>
+<!-- Requests -->
+<div class="section">
+  <h3>Subscription Requests</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Plan</th>
+        <th>Phone</th>
+        <th>Message</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="reqBody"></tbody>
+  </table>
+</div>
+
+<!-- Create Slip -->
+<div class="section">
+  <h3>Create Slip</h3>
+
+  <label>Date</label>
+  <input type="date" id="slipDate">
+
+  <label>Access</label>
+  <select id="access">
+    <option value="free">Free</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+    <option value="vip">VIP</option>
+  </select>
+
+  <button onclick="createSlip()">Create Slip</button>
+</div>
+
+<!-- Results -->
+<div class="section">
+  <h3>Slip Results</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Game</th>
+        <th>Odd</th>
+        <th>Over/Under</th>
+        <th>Result</th>
+        <th>Update</th>
+      </tr>
+    </thead>
+    <tbody id="slipBody"></tbody>
+  </table>
+</div>
+
+<!-- Payment Instructions -->
+<div class="section">
+  <h3>Subscription Activation</h3>
+
+  <p>Pay to:</p>
+  <strong>Till Number: 0789906001</strong>
+
+  <p>After payment, send:</p>
+  <ul>
+    <li>email</li>
+    <li>plan</li>
+    <li>payment confirmation</li>
+    <li>message</li>
+  </ul>
+
+  <p>Send to WhatsApp or SMS:</p>
+  <strong>0789906001</strong>
+
+  <p>Admin will activate after verification.</p>
+</div>
 
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
-let allUsers = [];
 
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-  if (!data.success || data.user.role !== "admin") {
-    alert("Admin login failed");
-    return;
-  }
-
-  localStorage.setItem("token", data.token);
-  alert("Logged in");
+async function loadAll() {
+  loadUsers();
+  loadRequests();
+  loadSlips();
 }
 
 async function loadUsers() {
-  const token = getToken();
-  if (!token) return alert("Login first");
-
-  const res = await fetch(`${API}/all-users`, {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
+  const res = await fetch(`${API}/all-users`);
   const data = await res.json();
-  if (!data.success) return alert(data.message);
 
-  allUsers = data.users;
-  renderUsers(allUsers);
-}
-
-function renderUsers(users) {
   const tbody = document.getElementById("usersBody");
   tbody.innerHTML = "";
 
-  users.forEach(user => {
-    const plan = user.plan || "free";
-    const expiry = user.expiresAt
-      ? new Date(user.expiresAt).toLocaleDateString()
-      : "-";
-
+  data.users.forEach(u => {
     const row = document.createElement("tr");
-
     row.innerHTML = `
-      <td>${user.email}</td>
-      <td>${user.role}</td>
-      <td>${plan}</td>
-      <td>${user.premium ? "YES" : "NO"}</td>
-      <td>${expiry}</td>
-      <td>
-        <select id="plan-${user.email}">
-          <option value="free">free</option>
-          <option value="weekly">weekly</option>
-          <option value="monthly">monthly</option>
-          <option value="vip">vip</option>
-        </select>
-        <button onclick="activate('${user.email}')">Update</button>
-      </td>
+      <td>${u.email}</td>
+      <td>${u.plan}</td>
+      <td>${u.premium}</td>
     `;
-
     tbody.appendChild(row);
   });
 }
 
-function filterUsers() {
-  const search = document.getElementById("search").value.toLowerCase();
-  const filtered = allUsers.filter(u =>
-    u.email.toLowerCase().includes(search)
-  );
-  renderUsers(filtered);
+async function loadRequests() {
+  const res = await fetch(`${API}/subscription-requests`);
+  const data = await res.json();
+
+  const tbody = document.getElementById("reqBody");
+  tbody.innerHTML = "";
+
+  data.requests.forEach(r => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${r.email}</td>
+      <td>${r.plan}</td>
+      <td>${r.phone}</td>
+      <td>${r.message}</td>
+      <td>${r.status}</td>
+      <td>
+        ${r.status === "pending"
+          ? `<button onclick="approveReq('${r._id}')">Approve</button>`
+          : "✔"}
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
-async function activate(email) {
-  const token = getToken();
-  const plan = document.getElementById(`plan-${email}`).value;
-
-  const res = await fetch(`${API}/activate`, {
+async function approveReq(id) {
+  await fetch(`${API}/approve-request`, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ userEmail: email, plan })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ requestId: id })
   });
 
-  const data = await res.json();
-  alert(data.message);
-  loadUsers();
+  alert("Request approved");
+  loadRequests();
 }
+
+async function createSlip() {
+  const date = document.getElementById("slipDate").value;
+  const access = document.getElementById("access").value;
+
+  const games = [
+    { home: "Team A", away: "Team B", odd: 2.10, overUnder: "Over 2.5", result: "pending" },
+    { home: "Team C", away: "Team D", odd: 1.90, overUnder: "Under 3.5", result: "pending" }
+  ];
+
+  await fetch(`${API}/slips`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ date, games, access })
+  });
+
+  alert("Slip created");
+}
+
+async function loadSlips() {
+  const res = await fetch(`${API}/slips`);
+  const data = await res.json();
+
+  const tbody = document.getElementById("slipBody");
+  tbody.innerHTML = "";
+
+  data.slips.forEach(slip => {
+    slip.games.forEach((g, index) => {
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${slip.date}</td>
+        <td>${g.home} vs ${g.away}</td>
+        <td>${g.odd}</td>
+        <td>${g.overUnder}</td>
+        <td>${resultBadge(g.result)}</td>
+        <td>
+          <button onclick="updateResult('${slip._id}', ${index}, 'win')">Win</button>
+          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">Lost</button>
+          <button onclick="updateResult('${slip._id}', ${index}, 'pending')">Pending</button>
+        </td>
+      `;
+
+      tbody.appendChild(row);
+    });
+  });
+}
+
+function resultBadge(result) {
+  if (result === "win") return "🟢 WIN";
+  if (result === "lost") return "🔴 LOST";
+  return "⚪ PENDING";
+}
+
+async function updateResult(slipId, index, result) {
+  await fetch(`${API}/slip-result`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ slipId, gameIndex: index, result })
+  });
+
+  alert("Result updated");
+  loadSlips();
+}
+
+loadAll();
 </script>
+
 </body>
 </html> 
