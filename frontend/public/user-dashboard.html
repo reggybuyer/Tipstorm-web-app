@@ -11,7 +11,6 @@
       background: #f4f4f4;
       color: #222;
     }
-    h2 { margin-bottom: 10px; }
 
     .grid {
       display: grid;
@@ -34,6 +33,7 @@
 
     .free { background: #d4f8d4; }
     .vip { background: #ffd6d6; }
+
     .win { background: #d4f8d4; }
     .lost { background: #ffd6d6; }
     .pending { background: #f2f2f2; }
@@ -62,7 +62,7 @@
 <div id="slipGrid" class="grid"></div>
 
 <script>
-const API = "https://tipstorm-web-app-1.onrender.com";
+const API = "https://tipstorm-web-app-4.onrender.com";
 
 // LOAD SLIPS
 async function loadSlips() {
@@ -85,7 +85,7 @@ async function loadSlips() {
       <hr>
     `;
 
-    // SHOW GAMES + RESULTS
+    // SHOW GAMES + RESULTS + OVER/UNDER
     slip.games.forEach(g => {
       card.innerHTML += `
         <div>
@@ -93,7 +93,7 @@ async function loadSlips() {
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
           <span class="badge ${g.result}">
-            ${g.result === "win" ? "WON" : g.result === "lost" ? "LOST" : "PENDING"}
+            ${g.result === "win" ? "WON" : g.result.toUpperCase()}
           </span>
         </div>
         <hr>

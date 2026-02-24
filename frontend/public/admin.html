@@ -4,9 +4,48 @@
   <meta charset="UTF-8">
   <title>TipStorm Admin Dashboard</title>
 
-  <!-- LINK CSS -->
-  <link rel="stylesheet" href="index.css">
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+      color: #222;
+    }
+
+    h2 { margin-bottom: 10px; }
+
+    .section { margin-bottom: 20px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .badge {
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .win { background: #d4f8d4; }
+    .lost { background: #ffd6d6; }
+    .pending { background: #f2f2f2; }
+
+    button, input, select {
+      padding: 6px;
+      margin: 4px 0;
+    }
+  </style>
 </head>
+
 <body>
 
 <h2>TipStorm Admin Dashboard</h2>
@@ -15,10 +54,8 @@
 <div class="section">
   <label>Admin Email</label>
   <input type="email" id="adminEmail">
-
   <label>Password</label>
   <input type="password" id="adminPassword">
-
   <button onclick="adminLogin()">Login</button>
 </div>
 
@@ -62,12 +99,12 @@
 <hr>
 
 <div class="section">
-  <h3>Bet Slip (Mark Results)</h3>
+  <h3>Bet Slip (Results)</h3>
   <div id="slipGrid" class="grid"></div>
 </div>
 
 <script>
-const API = "https://tipstorm-web-app-1.onrender.com";
+const API = "https://tipstorm-web-app-4.onrender.com";
 
 function logout() {
   localStorage.removeItem("token");
@@ -120,7 +157,7 @@ async function loadUsers() {
   });
 }
 
-/* BET SLIP (view + mark result) */
+/* BET SLIP */
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
@@ -156,23 +193,6 @@ async function loadSlips() {
   });
 }
 
-/* UPDATE RESULT */
-async function updateResult(slipId, gameIndex, result) {
-  const token = localStorage.getItem("token");
-
-  await fetch(`${API}/slip-result`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({ slipId, gameIndex, result })
-  });
-
-  alert("Result updated");
-  loadSlips();
-}
-
 /* CREATE SLIP */
 let games = [];
 let totalOdds = 1;
@@ -205,6 +225,7 @@ function addGame() {
 
     <label>Over/Under</label>
     <input id="ou-${index}" type="text">
+
     <hr>
   `;
 
@@ -214,8 +235,8 @@ function addGame() {
 async function createSlip() {
   const date = document.getElementById("slipDate").value;
   const access = document.getElementById("access").value;
-
   let builtGames = [];
+
   games.forEach((_, i) => {
     const home = document.getElementById(`home-${i}`).value;
     const away = document.getElementById(`away-${i}`).value;
@@ -241,6 +262,7 @@ async function createSlip() {
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
 }
 
+/* INITIAL */
 loadSlips();
 </script>
 
