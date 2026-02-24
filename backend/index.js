@@ -150,27 +150,34 @@ app.post("/approve-request", async (req, res) => {
 
   res.json({ success: true, message: "User activated" });
 });
-
-// Create slip
+// Create slip (minimum total odds = 2)
 app.post("/slips", async (req, res) => {
   const { date, games, access, totalOdds } = req.body;
+
+  if (totalOdds < 2) {
+    return res.json({ success: false, message: "Minimum total odds is 2" });
+  }
 
   const slip = await Slip.create({ date, games, access, totalOdds });
   res.json({ success: true, slip });
 });
 
-// Get slips (filter by plan)
+// Get slips (free or premium)
 app.get("/slips", async (req, res) => {
   const { plan, date } = req.query;
   let query = {};
-
   if (date) query.date = date;
 
   const slips = await Slip.find(query);
 
   const visible = slips.filter(slip => {
     if (slip.access === "free") return true;
-    if (!plan) return false;
+    return plan && (plan === slip.access || plan === "vip");
+  });
+
+  res.json({ success: true, slips: visible });
+}); 
+
 
     // user plan can access same or lower
     return plan === slip.access || (plan === "vip");

@@ -138,7 +138,6 @@ function addGame() {
 async function createSlip() {
   const date = document.getElementById("slipDate").value;
   const access = document.getElementById("access").value;
-
   let builtGames = [];
   let totalOdds = 1;
 
@@ -166,7 +165,7 @@ async function createSlip() {
   });
 
   alert("Slip created (Total odds: " + totalOdds.toFixed(2) + ")");
-}
+} 
 
 async function loadSlips() {
   const res = await fetch(`${API}/slips?plan=vip`);

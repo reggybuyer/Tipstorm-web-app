@@ -4,11 +4,7 @@
 <meta charset="UTF-8">
 <title>TipStorm User Dashboard</title>
 <style>
-  body {
-    font-family: Arial;
-    padding: 15px;
-    background: #f4f4f4;
-  }
+  body { font-family: Arial; padding: 15px; background: #f4f4f4; }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -53,11 +49,11 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
-// LOAD SLIPS WITH PREMIUM LOCK
 async function loadSlips() {
   const plan = document.getElementById("plan").value;
   const res = await fetch(`${API}/slips?plan=${plan}`);
   const data = await res.json();
+
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -65,50 +61,44 @@ async function loadSlips() {
     const card = document.createElement("div");
     card.className = "card";
 
-    const locked = slip.access !== "free" && plan !== slip.access && plan !== "vip";
+    const badge = slip.access === "free"
+      ? `<span class="badge free">FREE</span>`
+      : `<span class="badge vip">PREMIUM</span>`;
 
     card.innerHTML = `
-      <strong>${slip.date}</strong>
-      ${slip.access === "free"
-        ? "<span class='badge free'>FREE</span>"
-        : "<span class='badge vip'>PREMIUM</span>"}
-      <br>
+      <strong>${slip.date}</strong> ${badge}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
       <hr>
     `;
 
-    if (locked) {
-      card.innerHTML += `<span class="badge vip">Premium slip - upgrade to view games 🔒</span>`;
-    } else {
-      slip.games.forEach(g => {
-        card.innerHTML += `
-          <div>
-            ${g.home} vs ${g.away}<br>
-            Odd: ${g.odd}<br>
-            ${resultBadge(g.result)}
-          </div>
-          <hr>
-        `;
-      });
-    }
+    slip.games.forEach(g => {
+      card.innerHTML += `
+        <div>
+          ${g.home} vs ${g.away}<br>
+          Odd: ${g.odd}<br>
+          ${resultBadge(g.result)}
+        </div>
+        <hr>
+      `;
+    });
 
     grid.appendChild(card);
   });
 }
 
-// RESULT BADGE
 function resultBadge(result) {
   if (result === "win") return `<span class="badge free">WIN 🟢</span>`;
   if (result === "lost") return `<span class="badge vip">LOST 🔴</span>`;
   return `<span class="badge">PENDING ⚪</span>`;
 }
 
-// FILTER BY DATE
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
   const plan = document.getElementById("plan").value;
+
   const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
   const data = await res.json();
+
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
