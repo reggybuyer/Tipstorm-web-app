@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
-// Subscription request schema
+// Subscription request
 const requestSchema = new mongoose.Schema({
   email: String,
   plan: String,
@@ -41,7 +41,7 @@ const requestSchema = new mongoose.Schema({
 
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
-// Slip schema
+// Slip
 const slipSchema = new mongoose.Schema({
   date: { type: String, required: true },
   access: { type: String, default: "free" },
@@ -116,9 +116,7 @@ app.get("/all-users", async (req, res) => {
 // Subscription request
 app.post("/request-subscription", async (req, res) => {
   const { email, plan, phone, message } = req.body;
-
   await SubscriptionRequest.create({ email, plan, phone, message });
-
   res.json({ success: true, message: "Request sent" });
 });
 
@@ -155,11 +153,9 @@ app.post("/approve-request", async (req, res) => {
 // Create slip
 app.post("/slips", async (req, res) => {
   const { date, games, access } = req.body;
-
   const totalOdds = games.reduce((acc, g) => acc * g.odd, 1);
 
   const slip = await Slip.create({ date, games, access, totalOdds });
-
   res.json({ success: true, slip });
 });
 
