@@ -12,30 +12,31 @@ app.use(express.json());
 
 const SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-/* ======================
+/* ============================
    MongoDB Connection
-====================== */
-mongoose.connect(process.env.MONGO_URI)
+============================ */
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.log(err));
 
-/* ======================
+/* ============================
    User Schema
-====================== */
+============================ */
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: "user" },
+  role: { type: String, default: "user" }, // admin or user
   premium: { type: Boolean, default: false },
-  plan: { type: String, default: "free" },
+  plan: { type: String, default: "free" }, // free, weekly, monthly, vip
   expiresAt: { type: Date, default: null },
 });
 
 const User = mongoose.model("User", userSchema);
 
-/* ======================
-   Subscription Request
-====================== */
+/* ============================
+   Subscription Request Schema
+============================ */
 const requestSchema = new mongoose.Schema({
   email: String,
   plan: String,
@@ -47,9 +48,9 @@ const requestSchema = new mongoose.Schema({
 
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
-/* ======================
+/* ============================
    Slip Schema
-====================== */
+============================ */
 const slipSchema = new mongoose.Schema({
   date: { type: String, required: true },
   access: { type: String, default: "free" }, // free, weekly, monthly, vip
@@ -61,15 +62,15 @@ const slipSchema = new mongoose.Schema({
       odd: Number,
       overUnder: String,
       result: { type: String, default: "pending" },
-    }
-  ]
+    },
+  ],
 });
 
 const Slip = mongoose.model("Slip", slipSchema);
 
-/* ======================
-   Auto Expire Premium
-====================== */
+/* ============================
+   Auto Expire Premium Users
+============================ */
 app.use(async (req, res, next) => {
   const now = new Date();
   await User.updateMany(
@@ -79,9 +80,9 @@ app.use(async (req, res, next) => {
   next();
 });
 
-/* ======================
+/* ============================
    Register
-====================== */
+============================ */
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
 
@@ -96,27 +97,21 @@ app.post("/register", async (req, res) => {
   res.json({ success: true, message: "Registered. Login now." });
 });
 
-/* ======================
+/* ============================
    Login
-====================== */
+============================ */
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user) {
-    return res.json({ success: false, message: "Invalid login" });
-  }
+  if (!user) return res.json({ success: false, message: "Invalid login" });
 
   const match = bcrypt.compareSync(password, user.password);
-  if (!match) {
-    return res.json({ success: false, message: "Invalid login" });
-  }
+  if (!match) return res.json({ success: false, message: "Invalid login" });
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    SECRET,
-    { expiresIn: "7d" }
-  );
+  const token = jwt.sign({ id: user._id, role: user.role }, SECRET, {
+    expiresIn: "7d",
+  });
 
   res.json({
     success: true,
@@ -126,21 +121,21 @@ app.post("/login", async (req, res) => {
       role: user.role,
       plan: user.plan,
       premium: user.premium,
-    }
+    },
   });
 });
 
-/* ======================
+/* ============================
    Get All Users (Admin)
-====================== */
+============================ */
 app.get("/all-users", async (req, res) => {
   const users = await User.find();
   res.json({ success: true, users });
 });
 
-/* ======================
-   Request Subscription
-====================== */
+/* ============================
+   Request Subscription (User)
+============================ */
 app.post("/request-subscription", async (req, res) => {
   const { email, plan, phone, message } = req.body;
 
@@ -149,17 +144,17 @@ app.post("/request-subscription", async (req, res) => {
   res.json({ success: true, message: "Request sent. Await activation." });
 });
 
-/* ======================
+/* ============================
    View Requests (Admin)
-====================== */
+============================ */
 app.get("/subscription-requests", async (req, res) => {
   const requests = await SubscriptionRequest.find();
   res.json({ success: true, requests });
 });
 
-/* ======================
-   Approve Subscription
-====================== */
+/* ============================
+   Approve Subscription (Admin)
+============================ */
 app.post("/approve-request", async (req, res) => {
   const { requestId } = req.body;
 
@@ -169,16 +164,14 @@ app.post("/approve-request", async (req, res) => {
   }
 
   const user = await User.findOne({ email: reqDoc.email });
-
   if (user) {
-    let duration = 30; // default monthly
+    let duration = 30;
     if (reqDoc.plan === "weekly") duration = 7;
     if (reqDoc.plan === "vip") duration = 30;
 
     user.plan = reqDoc.plan;
     user.premium = true;
     user.expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
-
     await user.save();
   }
 
@@ -188,11 +181,15 @@ app.post("/approve-request", async (req, res) => {
   res.json({ success: true, message: "User activated" });
 });
 
-/* ======================
-   Create Slip
-====================== */
+/* ============================
+   Create Slip (Minimum Odds = 2)
+============================ */
 app.post("/slips", async (req, res) => {
   const { date, games, access, totalOdds } = req.body;
+
+  if (!games || games.length === 0) {
+    return res.json({ success: false, message: "Add at least one game" });
+  }
 
   if (totalOdds < 2) {
     return res.json({ success: false, message: "Minimum total odds is 2" });
@@ -202,15 +199,15 @@ app.post("/slips", async (req, res) => {
     date,
     games,
     access,
-    totalOdds
+    totalOdds,
   });
 
   res.json({ success: true, slip });
 });
 
-/* ======================
-   Get Slips
-====================== */
+/* ============================
+   Get Slips (Free & Premium)
+============================ */
 app.get("/slips", async (req, res) => {
   const { plan, date } = req.query;
 
@@ -221,15 +218,15 @@ app.get("/slips", async (req, res) => {
 
   const visible = slips.filter(slip => {
     if (slip.access === "free") return true;
-    return plan && (plan === slip.access || plan === "vip");
+    return plan === slip.access || plan === "vip";
   });
 
   res.json({ success: true, slips: visible });
 });
 
-/* ======================
+/* ============================
    Update Game Result
-====================== */
+============================ */
 app.post("/slip-result", async (req, res) => {
   const { slipId, gameIndex, result } = req.body;
 
@@ -244,18 +241,17 @@ app.post("/slip-result", async (req, res) => {
   res.json({ success: true });
 });
 
-/* ======================
+/* ============================
    Serve Frontend
-====================== */
+============================ */
 const frontendPath = path.join(__dirname, "../frontend/build");
 app.use(express.static(frontendPath));
-
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-/* ======================
+/* ============================
    Start Server
-====================== */
+============================ */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Running on port ${PORT}`)); 
