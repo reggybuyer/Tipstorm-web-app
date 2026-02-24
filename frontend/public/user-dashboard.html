@@ -49,11 +49,10 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
+// LOAD ALL SLIPS (no plan filter here)
 async function loadSlips() {
-  const plan = document.getElementById("plan").value;
-  const res = await fetch(`${API}/slips?plan=${plan}`);
+  const res = await fetch(`${API}/slips`);
   const data = await res.json();
-
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
 
@@ -71,7 +70,7 @@ async function loadSlips() {
       <hr>
     `;
 
-    // 👇 SHOW GAMES HERE
+    // SHOW GAMES
     slip.games.forEach(g => {
       card.innerHTML += `
         <div>
@@ -85,20 +84,19 @@ async function loadSlips() {
 
     grid.appendChild(card);
   });
-} 
+}
 
-
+// RESULT BADGE
 function resultBadge(result) {
   if (result === "win") return `<span class="badge free">WIN 🟢</span>`;
   if (result === "lost") return `<span class="badge vip">LOST 🔴</span>`;
   return `<span class="badge">PENDING ⚪</span>`;
 }
 
+// FILTER BY DATE
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
-  const plan = document.getElementById("plan").value;
-
-  const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
+  const res = await fetch(`${API}/slips?date=${date}`);
   const data = await res.json();
 
   const grid = document.getElementById("slipGrid");
