@@ -151,7 +151,7 @@ async function loadUsers() {
   });
 }
 
-/* SLIPS RESULTS */
+//  SLIPS(CARDS)
 async function loadSlips() {
   const res = await fetch(`${API}/slips?plan=vip`);
   const data = await res.json();
@@ -161,15 +161,34 @@ async function loadSlips() {
   data.slips.forEach(slip => {
     const div = document.createElement("div");
     div.className = "card";
+
+    const badge = slip.access === "free"
+      ? `<span class="badge free">FREE</span>`
+      : `<span class="badge vip">PREMIUM</span>`;
+
     div.innerHTML = `
-      <strong>${slip.date}</strong><br>
-      Access: ${slip.access}<br>
+      <strong>${slip.date}</strong> ${badge}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
-      Games: ${slip.games.length}
+      <hr>
     `;
+
+    slip.games.forEach(g => {
+      div.innerHTML += `
+        <div>
+          <strong>${g.home} vs ${g.away}</strong><br>
+          Odd: ${g.odd}<br>
+          <span class="badge ${g.result}">
+            ${g.result.toUpperCase()}
+          </span>
+        </div>
+        <hr>
+      `;
+    });
+
     grid.appendChild(div);
   });
-}
+} 
+
 
 /* CREATE SLIP */
 let games = [];
