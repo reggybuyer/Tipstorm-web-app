@@ -30,6 +30,7 @@
   .win { background: #d4f8d4; }
   .lost { background: #ffd6d6; }
   .pending { background: #f2f2f2; }
+
   button, input, select {
     padding: 6px;
     margin: 4px 0;
@@ -60,6 +61,7 @@
 
 <div class="section">
   <h3>Create Slip</h3>
+
   <label>Date</label>
   <input type="date" id="slipDate">
 
@@ -88,7 +90,7 @@
 <hr>
 
 <div class="section">
-  <h3>Slip Results (Mark WIN/LOST)</h3>
+  <h3>Slip Results</h3>
   <div id="slipGrid" class="grid"></div>
 </div>
 
@@ -146,7 +148,7 @@ async function loadUsers() {
   });
 }
 
-/* SLIPS (with games & result buttons) */
+/* SLIPS (view only) */
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
@@ -157,29 +159,25 @@ async function loadSlips() {
     const div = document.createElement("div");
     div.className = "card";
 
+    const badge = slip.access === "free"
+      ? `<span class="badge free">FREE</span>`
+      : `<span class="badge vip">PREMIUM</span>`;
+
     div.innerHTML = `
-      <strong>${slip.date}</strong><br>
-      Access: ${slip.access}<br>
+      <strong>${slip.date}</strong> ${badge}<br>
       Total Odds: ${slip.totalOdds.toFixed(2)}<br>
       <hr>
     `;
 
-    slip.games.forEach((g, index) => {
+    slip.games.forEach(g => {
       div.innerHTML += `
         <div>
           <strong>${g.home} vs ${g.away}</strong><br>
           Odd: ${g.odd}<br>
           Over/Under: ${g.overUnder || "N/A"}<br>
-          <span class="badge ${g.result}">
-            ${g.result.toUpperCase() === "WIN" ? "WON" : g.result.toUpperCase()}
+          <span class="badge ${g.result === 'win' ? 'win' : g.result === 'lost' ? 'lost' : 'pending'}">
+            ${g.result === 'win' ? 'WON' : g.result.toUpperCase()}
           </span>
-          <br>
-          <button onclick="updateResult('${slip._id}', ${index}, 'win')">
-            Mark WON
-          </button>
-          <button onclick="updateResult('${slip._id}', ${index}, 'lost')">
-            Mark LOST
-          </button>
         </div>
         <hr>
       `;
@@ -187,23 +185,6 @@ async function loadSlips() {
 
     grid.appendChild(div);
   });
-}
-
-/* UPDATE RESULT */
-async function updateResult(slipId, gameIndex, result) {
-  const token = localStorage.getItem("token");
-
-  await fetch(`${API}/slip-result`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({ slipId, gameIndex, result })
-  });
-
-  alert("Result updated");
-  loadSlips();
 }
 
 /* CREATE SLIP */
@@ -249,7 +230,6 @@ async function createSlip() {
   const access = document.getElementById("access").value;
 
   let builtGames = [];
-
   games.forEach((_, i) => {
     const home = document.getElementById(`home-${i}`).value;
     const away = document.getElementById(`away-${i}`).value;
@@ -281,6 +261,7 @@ async function createSlip() {
   alert(`Slip created (Total Odds: ${totalOdds.toFixed(2)})`);
 }
 
+/* LOAD SLIPS */
 loadSlips();
 </script>
 
