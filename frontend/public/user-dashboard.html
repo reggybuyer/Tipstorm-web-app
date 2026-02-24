@@ -71,6 +71,7 @@ async function loadSlips() {
       <hr>
     `;
 
+    // 👇 SHOW GAMES HERE
     slip.games.forEach(g => {
       card.innerHTML += `
         <div>
@@ -84,7 +85,8 @@ async function loadSlips() {
 
     grid.appendChild(card);
   });
-}
+} 
+
 
 function resultBadge(result) {
   if (result === "win") return `<span class="badge free">WIN 🟢</span>`;
