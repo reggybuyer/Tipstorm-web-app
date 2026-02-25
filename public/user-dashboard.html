@@ -1,40 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TipStorm Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    #paymentPopup {
-      display: none;
-      position: fixed;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      z-index: 999;
-    }
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+#paymentPopup {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 999;
+}
 
-    .locked {
-      opacity: 0.6;
-    }
+.card {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
 
-    .locked-message {
-      background: #111;
-      color: #ffcc00;
-      padding: 10px;
-      border-radius: 6px;
-      text-align: center;
-      margin-top: 10px;
-    }
-  </style>
+.badge {
+  background: #222;
+  color: white;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.locked {
+  opacity: 0.6;
+}
+
+.locked-message {
+  background: #111;
+  color: #ffcc00;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+#welcome {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+#subscriptionMsg {
+  background: #fff3cd;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+</style>
 </head>
 <body>
 
-<h2>TipStorm Dashboard</h2>
+<h2>Dashboard</h2>
+
+<div id="welcome"></div>
+<div id="subscriptionMsg">
+  Subscribe to unlock premium slips:
+  Weekly Ksh 500 | Monthly Ksh 1000 | VIP Ksh 1500
+</div>
 
 <label>Email</label>
 <input type="email" id="email">
@@ -51,7 +82,7 @@
 <button onclick="filterDate()">Filter by Date</button>
 <input type="date" id="filterDate">
 
-<div id="slipGrid" class="grid"></div>
+<div id="slipGrid"></div>
 
 <!-- Payment Popup -->
 <div id="paymentPopup">
@@ -62,9 +93,8 @@
     VIP: Ksh 1500
   </p>
   <p>
-    Pay to Mpesa: <strong>0789906001</strong><br>
-    Send confirmation with your email via WhatsApp or SMS to:
-    <strong>0789906001</strong>
+    Pay to Mpesa: 0789906001<br>
+    Send confirmation with email to same number.
   </p>
   <button onclick="closePopup()">Close</button>
 </div>
@@ -72,10 +102,21 @@
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
 
+// WELCOME MESSAGE
+function showWelcome() {
+  const email = document.getElementById("email").value;
+  if (email) {
+    document.getElementById("welcome").innerHTML =
+      `Welcome, <strong>${email}</strong>`;
+  }
+}
+
 // LOAD SLIPS
 async function loadSlips() {
+  showWelcome();
+
   const plan = document.getElementById("plan").value;
-  const res = await fetch(`${API}/slips?plan=${plan}`);
+  const res = await fetch(`${API}/slips`);
   const data = await res.json();
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
@@ -95,34 +136,29 @@ async function loadSlips() {
       plan !== "vip";
 
     card.innerHTML = `
-      <strong>${slip.date}</strong>
-      ${slip.access === "free"
-        ? '<span class="badge free">FREE</span>'
-        : '<span class="badge vip">PREMIUM</span>'}
-      <br>
-      Total Odds: ${slip.totalOdds.toFixed(2)}
-      <hr>
+      <div class="badge">
+        <h3>${slip.date} - ${slip.access.toUpperCase()}</h3>
+        <p><strong>Total Odds:</strong> ${slip.totalOdds}</p>
+      </div>
     `;
 
     if (isLocked) {
       card.classList.add("locked");
       card.innerHTML += `
         <div class="locked-message">
-          🔒 Premium slip — upgrade to view games and results.
+          🔒 Premium slip (locked)
           <br>
           <button onclick="showPopup()">Unlock Access</button>
         </div>
       `;
     } else {
-      slip.games.forEach(g => {
+      slip.games.forEach(game => {
         card.innerHTML += `
           <div>
-            <strong>${g.home} vs ${g.away}</strong><br>
-            Odd: ${g.odd}<br>
-            Over/Under: ${g.overUnder || "N/A"}<br>
-            <span class="badge ${g.result}">
-              ${g.result.toUpperCase()}
-            </span>
+            <strong>${game.home} vs ${game.away}</strong><br>
+            Market: ${game.overUnder || "N/A"}<br>
+            Odd: ${game.odd}<br>
+            Result: ${game.result}
           </div>
           <hr>
         `;
@@ -150,8 +186,10 @@ async function filterDate() {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <strong>${slip.date}</strong><br>
-      Total Odds: ${slip.totalOdds.toFixed(2)}
+      <div class="badge">
+        <h3>${slip.date}</h3>
+        <p><strong>Total Odds:</strong> ${slip.totalOdds}</p>
+      </div>
     `;
     grid.appendChild(card);
   });
