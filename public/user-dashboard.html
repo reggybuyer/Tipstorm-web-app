@@ -1,71 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Dashboard</title>
-<link rel="stylesheet" href="styles.css">
-<style>
-#paymentPopup {
-  display: none;
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  z-index: 999;
-}
-
-.card {
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-.badge {
-  background: #222;
-  color: white;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.locked {
-  opacity: 0.6;
-}
-
-.locked-message {
-  background: #111;
-  color: #ffcc00;
-  padding: 10px;
-  border-radius: 6px;
-  text-align: center;
-}
-
-#welcome {
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-#subscriptionMsg {
-  background: #fff3cd;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 10px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>TipStorm User Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<h2>Dashboard</h2>
+<h2>TipStorm Dashboard</h2>
 
 <div id="welcome"></div>
-<div id="subscriptionMsg">
-  Subscribe to unlock premium slips:
-  Weekly Ksh 500 | Monthly Ksh 1000 | VIP Ksh 1500
-</div>
 
 <label>Email</label>
 <input type="email" id="email">
@@ -82,10 +26,10 @@
 <button onclick="filterDate()">Filter by Date</button>
 <input type="date" id="filterDate">
 
-<div id="slipGrid"></div>
+<div id="slipGrid" class="grid"></div>
 
-<!-- Payment Popup -->
-<div id="paymentPopup">
+<!-- PAYMENT POPUP -->
+<div id="paymentPopup" class="popup">
   <h3>Premium Access</h3>
   <p>
     Weekly: Ksh 500<br>
@@ -93,8 +37,9 @@
     VIP: Ksh 1500
   </p>
   <p>
-    Pay to Mpesa: 0789906001<br>
-    Send confirmation with email to same number.
+    Pay to Mpesa: <strong>0789906001</strong><br>
+    Send confirmation with your email via WhatsApp or SMS to:<br>
+    <strong>0789906001</strong>
   </p>
   <button onclick="closePopup()">Close</button>
 </div>
@@ -104,11 +49,9 @@ const API = "https://tipstorm-web-app-1.onrender.com";
 
 // WELCOME MESSAGE
 function showWelcome() {
-  const email = document.getElementById("email").value;
-  if (email) {
-    document.getElementById("welcome").innerHTML =
-      `Welcome, <strong>${email}</strong>`;
-  }
+  const email = document.getElementById("email").value || "User";
+  document.getElementById("welcome").innerHTML =
+    `<div class="badge free">Welcome, ${email}</div>`;
 }
 
 // LOAD SLIPS
@@ -116,7 +59,7 @@ async function loadSlips() {
   showWelcome();
 
   const plan = document.getElementById("plan").value;
-  const res = await fetch(`${API}/slips`);
+  const res = await fetch(`${API}/slips?plan=${plan}`);
   const data = await res.json();
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
@@ -130,35 +73,33 @@ async function loadSlips() {
     const card = document.createElement("div");
     card.className = "card";
 
-    const isLocked =
-      slip.access !== "free" &&
-      plan !== slip.access &&
-      plan !== "vip";
+    const locked = slip.access !== "free" && plan !== slip.access && plan !== "vip";
 
     card.innerHTML = `
       <div class="badge">
-        <h3>${slip.date} - ${slip.access.toUpperCase()}</h3>
-        <p><strong>Total Odds:</strong> ${slip.totalOdds}</p>
+        <strong>${slip.date}</strong> - ${slip.access.toUpperCase()}
+        <br>
+        Total Odds: ${slip.totalOdds}
       </div>
+      <hr>
     `;
 
-    if (isLocked) {
-      card.classList.add("locked");
+    if (locked) {
       card.innerHTML += `
         <div class="locked-message">
-          🔒 Premium slip (locked)
+          🔒 Premium slip — unlock to view games.
           <br>
-          <button onclick="showPopup()">Unlock Access</button>
+          <button onclick="showPopup()">Unlock</button>
         </div>
       `;
     } else {
       slip.games.forEach(game => {
         card.innerHTML += `
-          <div>
-            <strong>${game.home} vs ${game.away}</strong><br>
-            Market: ${game.overUnder || "N/A"}<br>
-            Odd: ${game.odd}<br>
-            Result: ${game.result}
+          <div class="game-row">
+            <p><strong>${game.home} vs ${game.away}</strong></p>
+            <p>Market: ${game.overUnder || "N/A"}</p>
+            <p>Odd: ${game.odd}</p>
+            <p>Status: ${game.result.toUpperCase()}</p>
           </div>
           <hr>
         `;
@@ -172,7 +113,9 @@ async function loadSlips() {
 // FILTER
 async function filterDate() {
   const date = document.getElementById("filterDate").value;
-  const res = await fetch(`${API}/slips?date=${date}`);
+  const plan = document.getElementById("plan").value;
+
+  const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
   const data = await res.json();
   const grid = document.getElementById("slipGrid");
   grid.innerHTML = "";
@@ -186,10 +129,8 @@ async function filterDate() {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <div class="badge">
-        <h3>${slip.date}</h3>
-        <p><strong>Total Odds:</strong> ${slip.totalOdds}</p>
-      </div>
+      <strong>${slip.date}</strong><br>
+      Total Odds: ${slip.totalOdds}
     `;
     grid.appendChild(card);
   });

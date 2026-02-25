@@ -3,46 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>TipStorm Admin Dashboard</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 10px;
-    }
-
-    .card {
-      background: white;
-      padding: 12px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-
-    .badge {
-      background: #222;
-      color: white;
-      padding: 8px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-
-    .game-row {
-      margin-top: 8px;
-      padding: 8px;
-      background: #f4f4f4;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 6px 10px;
-      margin-top: 6px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -50,49 +11,56 @@
 
 <button onclick="logout()">Logout</button>
 
-<label>Admin Email</label>
-<input type="email" id="adminEmail">
+<div class="section">
+  <label>Admin Email</label>
+  <input type="email" id="adminEmail">
 
-<label>Password</label>
-<input type="password" id="adminPassword">
+  <label>Password</label>
+  <input type="password" id="adminPassword">
 
-<button onclick="adminLogin()">Login</button>
-
-<hr>
-
-<button onclick="loadUsers()">Load Users</button>
-<div id="usersGrid" class="grid"></div>
-
-<hr>
-
-<h3>Create Slip</h3>
-
-<label>Date</label>
-<input type="date" id="slipDate">
-
-<label>Access</label>
-<select id="access">
-  <option value="free">Free</option>
-  <option value="weekly">Weekly</option>
-  <option value="monthly">Monthly</option>
-  <option value="vip">VIP</option>
-</select>
-
-<div id="gamesContainer"></div>
-
-<button onclick="addGame()">Add Game</button>
-
-<div>
-  <strong>Total Odds:</strong>
-  <span id="totalOddsDisplay">1.00</span>
+  <button onclick="adminLogin()">Login</button>
 </div>
 
-<button onclick="createSlip()">Create Slip</button>
+<hr>
+
+<div class="section">
+  <button onclick="loadUsers()">Load Users</button>
+  <div id="usersGrid" class="grid"></div>
+</div>
 
 <hr>
 
-<h3>Bet Slip (Mark Results)</h3>
-<div id="slipGrid" class="grid"></div>
+<div class="section">
+  <h3>Create Slip</h3>
+
+  <label>Date</label>
+  <input type="date" id="slipDate">
+
+  <label>Access</label>
+  <select id="access">
+    <option value="free">Free</option>
+    <option value="weekly">Weekly</option>
+    <option value="monthly">Monthly</option>
+    <option value="vip">VIP</option>
+  </select>
+
+  <div id="gamesContainer"></div>
+  <button onclick="addGame()">Add Game</button>
+
+  <div>
+    <strong>Total Odds:</strong>
+    <span id="totalOddsDisplay">1.00</span>
+  </div>
+
+  <button onclick="createSlip()">Create Slip</button>
+</div>
+
+<hr>
+
+<div class="section">
+  <h3>Bet Slips (Manage Results)</h3>
+  <div id="slipGrid" class="grid"></div>
+</div>
 
 <script>
 const API = "https://tipstorm-web-app-1.onrender.com";
@@ -103,7 +71,7 @@ function logout() {
   alert("Logged out");
 }
 
-// LOGIN
+// ADMIN LOGIN
 async function adminLogin() {
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
@@ -115,7 +83,6 @@ async function adminLogin() {
   });
 
   const data = await res.json();
-
   if (!data.success || data.user.role !== "admin") {
     alert("Admin login failed");
     return;
@@ -125,7 +92,7 @@ async function adminLogin() {
   alert("Admin logged in");
 }
 
-// USERS
+// LOAD USERS
 async function loadUsers() {
   const token = localStorage.getItem("token");
   if (!token) return alert("Login first");
@@ -150,7 +117,7 @@ async function loadUsers() {
   });
 }
 
-// LOAD SLIPS
+// LOAD SLIPS (GROUPED)
 async function loadSlips() {
   const res = await fetch(`${API}/slips`);
   const data = await res.json();
@@ -168,18 +135,22 @@ async function loadSlips() {
 
     card.innerHTML = `
       <div class="badge">
-        <h3>${slip.date} - ${slip.access.toUpperCase()}</h3>
-        <p><strong>Total Odds:</strong> ${slip.totalOdds}</p>
+        <strong>${slip.date}</strong> - ${slip.access.toUpperCase()}
+        <br>
+        Total Odds: ${slip.totalOdds}
       </div>
+      <hr>
     `;
 
+    let gamesHtml = "";
     slip.games.forEach(game => {
-      card.innerHTML += `
+      gamesHtml += `
         <div class="game-row">
           <p><strong>${game.home} vs ${game.away}</strong></p>
           <p>Market: ${game.overUnder || "N/A"}</p>
           <p>Odd: ${game.odd}</p>
-          <p>Result: ${game.result}</p>
+          <p>Status: ${game.result.toUpperCase()}</p>
+
           <button onclick="updateResult('${slip._id}', ${slip.games.indexOf(game)}, 'win')">
             Mark WON
           </button>
@@ -187,9 +158,11 @@ async function loadSlips() {
             Mark LOST
           </button>
         </div>
+        <hr>
       `;
     });
 
+    card.innerHTML += gamesHtml;
     grid.appendChild(card);
   });
 }
@@ -197,7 +170,6 @@ async function loadSlips() {
 // UPDATE RESULT
 async function updateResult(slipId, gameIndex, result) {
   const token = localStorage.getItem("token");
-
   await fetch(`${API}/slip-result`, {
     method: "POST",
     headers: {
@@ -233,10 +205,10 @@ function addGame() {
   div.className = "card";
   div.innerHTML = `
     <label>Home</label>
-    <input id="home-${index}" type="text">
+    <input id="home-${index}" type="text" oninput="updateTotalOdds()">
 
     <label>Away</label>
-    <input id="away-${index}" type="text">
+    <input id="away-${index}" type="text" oninput="updateTotalOdds()">
 
     <label>Odd</label>
     <input id="odd-${index}" type="number" step="0.01" oninput="updateTotalOdds()">
@@ -255,7 +227,6 @@ async function createSlip() {
   const access = document.getElementById("access").value;
 
   let builtGames = [];
-
   games.forEach((_, i) => {
     const home = document.getElementById(`home-${i}`).value;
     const away = document.getElementById(`away-${i}`).value;
