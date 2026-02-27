@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = process.env.REACT_APP_API_BASE;
+const API = "https://tipstorm-web-app-1.onrender.com";
 
 export default function UserLogin() {
   const [email, setEmail] = useState("");
@@ -35,23 +35,21 @@ export default function UserLogin() {
   }
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-box">
-        <h2>User Login</h2>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={login}>Login</button>
-      </div>
+    <div>
+      <h2>User Login</h2>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button onClick={login}>Login</button>
     </div>
   );
 } 

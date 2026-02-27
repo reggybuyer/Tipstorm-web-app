@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const API = "https://tipstorm-backend.onrender.com";
+const API = "https://tipstorm-web-app-1.onrender.com";
 
 export default function Admin() {
   const [users, setUsers] = useState([]);
@@ -9,9 +9,9 @@ export default function Admin() {
   const [access, setAccess] = useState("free");
   const [requests, setRequests] = useState([]);
   const [slips, setSlips] = useState([]);
-
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+
   const limit = 10;
 
   useEffect(() => {
@@ -26,35 +26,28 @@ export default function Admin() {
     window.location.href = "/";
   }
 
-  /* ============================
-     USERS
-  ============================ */
+  /* USERS */
   async function loadUsers() {
     const token = localStorage.getItem("token");
     const res = await fetch(`${API}/all-users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
     const data = await res.json();
     setUsers(data.users || []);
   }
 
-  /* ============================
-     REQUESTS
-  ============================ */
+  /* REQUESTS */
   async function loadRequests() {
     const token = localStorage.getItem("token");
     const res = await fetch(`${API}/subscription-requests`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
     const data = await res.json();
     setRequests(data.requests || []);
   }
 
   async function approve(id) {
     const token = localStorage.getItem("token");
-
     await fetch(`${API}/approve-request`, {
       method: "POST",
       headers: {
@@ -68,9 +61,7 @@ export default function Admin() {
     loadRequests();
   }
 
-  /* ============================
-     SLIP CREATION
-  ============================ */
+  /* CREATE SLIP */
   function addGame() {
     setGames([
       ...games,
@@ -106,21 +97,17 @@ export default function Admin() {
     loadSlips();
   }
 
-  /* ============================
-     SLIPS (PAGINATION)
-  ============================ */
+  /* LOAD SLIPS */
   async function loadSlips(newPage = 1) {
-    const res = await fetch(`${API}/slips?page=${newPage}&limit=${limit}`);
+    const res = await fetch(
+      `${API}/slips?page=${newPage}&limit=${limit}`
+    );
     const data = await res.json();
-
     setSlips(data.slips || []);
     setPages(data.pages || 1);
     setPage(newPage);
   }
 
-  /* ============================
-     RESULTS
-  ============================ */
   async function markResult(slipId, index, result) {
     const token = localStorage.getItem("token");
 
@@ -144,14 +131,18 @@ export default function Admin() {
         <button onClick={logout}>Logout</button>
       </div>
 
-      {/* CREATE SLIP */}
       <div className="card">
         <h3>Create Slip</h3>
-        <label>Date</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
 
-        <label>Access</label>
-        <select value={access} onChange={(e) => setAccess(e.target.value)}>
+        <select
+          value={access}
+          onChange={(e) => setAccess(e.target.value)}
+        >
           <option value="free">Free</option>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
@@ -159,7 +150,7 @@ export default function Admin() {
         </select>
 
         {games.map((g, i) => (
-          <div key={i} className="card">
+          <div key={i}>
             <input
               placeholder="Home"
               value={g.home}
@@ -179,117 +170,15 @@ export default function Admin() {
             <input
               placeholder="Over/Under"
               value={g.overUnder}
-              onChange={(e) => updateGame(i, "overUnder", e.target.value)}
+              onChange={(e) =>
+                updateGame(i, "overUnder", e.target.value)
+              }
             />
           </div>
         ))}
 
         <button onClick={addGame}>Add Game</button>
         <button onClick={createSlip}>Create Slip</button>
-      </div>
-
-      {/* USERS */}
-      <div className="card">
-        <h3>Users</h3>
-        <button onClick={loadUsers}>Load Users</button>
-
-        {users.length === 0 && <p>No users</p>}
-        {users.map((u) => (
-          <div key={u.email} className="card">
-            <strong>{u.email}</strong>
-            <p>
-              Plan: <span className={`plan-text plan-${u.plan}`}>{u.plan}</span>
-            </p>
-            <p>Premium: {u.premium ? "Yes" : "No"}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* REQUESTS */}
-      <div className="card">
-        <h3>Requests</h3>
-        <button onClick={loadRequests}>Load Requests</button>
-
-        {requests.length === 0 && <p>No requests</p>}
-        {requests.map((r) => (
-          <div key={r._id} className="card">
-            <strong>{r.email}</strong>
-            <p>Plan: {r.plan}</p>
-            <p>Status: {r.status}</p>
-            <button onClick={() => approve(r._id)}>Activate</button>
-          </div>
-        ))}
-      </div>
-
-      {/* SLIPS TABLE */}
-      <div className="card">
-        <h3>Slips (Results)</h3>
-        <button onClick={() => loadSlips(1)}>Load Slips</button>
-
-        {slips.length === 0 && <p>No slips</p>}
-
-        <div style={{ overflowX: "auto" }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Access</th>
-                <th>Total Odds</th>
-                <th>Games</th>
-                <th>Results</th>
-              </tr>
-            </thead>
-            <tbody>
-              {slips.map((slip) => (
-                <tr key={slip._id}>
-                  <td>{slip.date}</td>
-                  <td>{slip.access.toUpperCase()}</td>
-                  <td>{slip.totalOdds.toFixed(2)}</td>
-                  <td>
-                    {slip.games.map((g, i) => (
-                      <div key={i} className="card">
-                        <strong>
-                          {g.home} vs {g.away}
-                        </strong>
-                        <br />
-                        Odd: {g.odd}
-                        <br />
-                        Over/Under: {g.overUnder || "N/A"}
-                      </div>
-                    ))}
-                  </td>
-                  <td>
-                    {slip.games.map((g, i) => (
-                      <div key={i}>
-                        <span className={`badge ${g.result}`}>{g.result}</span>
-                        <br />
-                        <button onClick={() => markResult(slip._id, i, "win")}>
-                          Won
-                        </button>
-                        <button onClick={() => markResult(slip._id, i, "lost")}>
-                          Lost
-                        </button>
-                      </div>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* PAGINATION */}
-        <div style={{ marginTop: "10px" }}>
-          <button disabled={page <= 1} onClick={() => loadSlips(page - 1)}>
-            Previous
-          </button>
-          <span style={{ margin: "0 10px" }}>
-            Page {page} of {pages}
-          </span>
-          <button disabled={page >= pages} onClick={() => loadSlips(page + 1)}>
-            Next
-          </button>
-        </div>
       </div>
     </div>
   );
