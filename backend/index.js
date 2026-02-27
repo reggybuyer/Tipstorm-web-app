@@ -7,7 +7,13 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 
 const app = express();
-app.use(cors());
+
+/* ============================
+   Middleware
+============================ */
+app.use(cors({
+  origin: "*",
+}));
 app.use(express.json());
 
 const SECRET = process.env.JWT_SECRET || "supersecretkey";
@@ -15,14 +21,17 @@ const SECRET = process.env.JWT_SECRET || "supersecretkey";
 /* ============================
    MongoDB Connection
 ============================ */
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 /* ============================
-   User Schema
+   Schemas
 ============================ */
+
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -32,11 +41,6 @@ const userSchema = new mongoose.Schema({
   expiresAt: { type: Date, default: null },
 });
 
-const User = mongoose.model("User", userSchema);
-
-/* ============================
-   Subscription Request Schema
-============================ */
 const requestSchema = new mongoose.Schema({
   email: String,
   plan: String,
@@ -46,14 +50,6 @@ const requestSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const SubscriptionRequest = mongoose.model(
-  "SubscriptionRequest",
-  requestSchema
-);
-
-/* ============================
-   Slip Schema
-============================ */
 const slipSchema = new mongoose.Schema({
   date: { type: String, required: true },
   access: { type: String, default: "free" },
@@ -69,66 +65,109 @@ const slipSchema = new mongoose.Schema({
   ],
 });
 
+const User = mongoose.model("User", userSchema);
+const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 const Slip = mongoose.model("Slip", slipSchema);
 
 /* ============================
    Auto Expire Premium Users
 ============================ */
 app.use(async (req, res, next) => {
-  const now = new Date();
-  await User.updateMany(
-    { premium: true, expiresAt: { $lt: now } },
-    { premium: false, plan: "free", expiresAt: null }
-  );
-  next();
+  try {
+    const now = new Date();
+    await User.updateMany(
+      { premium: true, expiresAt: { $lt: now } },
+      { premium: false, plan: "free", expiresAt: null }
+    );
+    next();
+  } catch (err) {
+    next();
+  }
 });
 
 /* ============================
    Register
 ============================ */
 app.post("/register", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const exists = await User.findOne({ email });
-  if (exists)
-    return res.status(400).json({ success: false, message: "User exists" });
+    const exists = await User.findOne({ email });
+    if (exists)
+      return res.status(400).json({ success: false, message: "User exists" });
 
-  const hashed = bcrypt.hashSync(password, 10);
-  await User.create({ email, password: hashed });
+    const hashed = bcrypt.hashSync(password, 10);
+    await User.create({ email, password: hashed });
 
-  res.json({ success: true, message: "Registered. Login now." });
+    res.json({ success: true, message: "Registered. Login now." });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
 /* ============================
    Login
 ============================ */
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user)
-    return res.json({ success: false, message: "Invalid login" });
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.json({ success: false, message: "Invalid login" });
 
-  const match = bcrypt.compareSync(password, user.password);
-  if (!match)
-    return res.json({ success: false, message: "Invalid login" });
+    const match = bcrypt.compareSync(password, user.password);
+    if (!match)
+      return res.json({ success: false, message: "Invalid login" });
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    SECRET,
-    { expiresIn: "7d" }
-  );
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      SECRET,
+      { expiresIn: "7d" }
+    );
 
-  res.json({
-    success: true,
-    token,
-    user: {
-      email: user.email,
-      role: user.role,
-      plan: user.plan,
-      premium: user.premium,
-    },
-  });
+    res.json({
+      success: true,
+      token,
+      user: {
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        premium: user.premium,
+        expiresAt: user.expiresAt,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+/* ============================
+   Profile
+============================ */
+app.get("/profile", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ success: false });
+
+    const decoded = jwt.verify(token, SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) return res.status(404).json({ success: false });
+
+    res.json({
+      success: true,
+      user: {
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        premium: user.premium,
+        expiresAt: user.expiresAt,
+      },
+    });
+  } catch (err) {
+    res.status(401).json({ success: false });
+  }
 });
 
 /* ============================
@@ -142,6 +181,7 @@ function verifyAdmin(req, res, next) {
     const decoded = jwt.verify(token, SECRET);
     if (decoded.role !== "admin")
       return res.status(403).json({ success: false });
+
     next();
   } catch {
     return res.status(403).json({ success: false });
@@ -149,43 +189,19 @@ function verifyAdmin(req, res, next) {
 }
 
 /* ============================
-   Get All Users (Admin Only)
+   Admin Routes
 ============================ */
+
 app.get("/all-users", verifyAdmin, async (req, res) => {
   const users = await User.find();
   res.json({ success: true, users });
 });
 
-/* ============================
-   Request Subscription
-============================ */
-app.post("/request-subscription", async (req, res) => {
-  const { email, plan, phone, message } = req.body;
-
-  await SubscriptionRequest.create({
-    email,
-    plan,
-    phone,
-    message,
-  });
-
-  res.json({
-    success: true,
-    message: "Request sent. Await activation.",
-  });
-});
-
-/* ============================
-   View Requests (Admin)
-============================ */
 app.get("/subscription-requests", verifyAdmin, async (req, res) => {
   const requests = await SubscriptionRequest.find();
   res.json({ success: true, requests });
 });
 
-/* ============================
-   Approve Subscription
-============================ */
 app.post("/approve-request", verifyAdmin, async (req, res) => {
   const { requestId } = req.body;
 
@@ -217,56 +233,49 @@ app.post("/approve-request", verifyAdmin, async (req, res) => {
 });
 
 /* ============================
-   Create Slip (Minimum Odds 2)
+   Slips
 ============================ */
+
 app.post("/slips", async (req, res) => {
   const { date, games, access, totalOdds } = req.body;
 
   if (!games || games.length === 0)
-    return res.json({
-      success: false,
-      message: "Add at least one game",
-    });
+    return res.json({ success: false, message: "Add at least one game" });
 
   if (totalOdds < 2)
-    return res.json({
-      success: false,
-      message: "Minimum total odds is 2",
-    });
+    return res.json({ success: false, message: "Minimum total odds is 2" });
 
-  const slip = await Slip.create({
-    date,
-    games,
-    access,
-    totalOdds,
-  });
+  const slip = await Slip.create({ date, games, access, totalOdds });
 
   res.json({ success: true, slip });
 });
 
-/* ============================
-   Get Slips (Return ALL)
-============================ */
 app.get("/slips", async (req, res) => {
-  const { date } = req.query;
+  const { date, page = 1, limit = 10 } = req.query;
 
   let query = {};
   if (date) query.date = date;
 
-  const slips = await Slip.find(query);
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const total = await Slip.countDocuments(query);
 
-  res.json({ success: true, slips });
+  const slips = await Slip.find(query)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .sort({ date: -1 });
+
+  res.json({
+    success: true,
+    slips,
+    pages: Math.ceil(total / limit),
+  });
 });
 
-/* ============================
-   Update Game Result
-============================ */
 app.post("/slip-result", verifyAdmin, async (req, res) => {
   const { slipId, gameIndex, result } = req.body;
 
   const slip = await Slip.findById(slipId);
-  if (!slip)
-    return res.status(404).json({ success: false });
+  if (!slip) return res.status(404).json({ success: false });
 
   slip.games[gameIndex].result = result;
   await slip.save();
@@ -288,4 +297,4 @@ app.get("*", (req, res) => {
    Start Server
 ============================ */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Running on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`🚀 Running on port ${PORT}`)); 

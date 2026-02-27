@@ -1,48 +1,61 @@
-/* ===== GLOBAL ===== */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f4f4f4;
-  color: #222;
 }
 
-h2, h3 {
-  margin: 10px 0;
+.section {
+  padding: 20px;
 }
 
-/* ===== GRID LAYOUT (mobile friendly) ===== */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px;
-  padding: 10px 0;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
 }
 
-/* ===== CARDS ===== */
 .card {
   background: white;
-  padding: 12px;
+  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Slip badges */
 .badge {
-  padding: 4px 6px;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
+  background: #e0e0e0;
 }
 
-.win { background: #d4f8d4; }
-.lost { background: #ffd6d6; }
-.pending { background: #f2f2f2; }
+.badge.free {
+  background: #d4f8d4;
+}
 
-/* ===== INPUTS & BUTTONS ===== */
-input, button, select {
+.badge.vip {
+  background: #ffd6d6;
+}
+
+.badge.pending {
+  background: #f2f2f2;
+}
+
+.locked-message {
+  background: #111;
+  color: #ffcc00;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+input,
+select,
+button {
   padding: 8px;
   margin: 4px 0;
-  border: 1px solid #ccc;
   border-radius: 4px;
+  border: 1px solid #ccc;
 }
 
 button {
@@ -53,45 +66,4 @@ button {
 
 button:hover {
   background: #444;
-}
-
-/* ===== TABLES (admin) ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-th {
-  background: #222;
-  color: white;
-}
-
-/* ===== SECTION BOX ===== */
-.section {
-  margin-top: 20px;
-  background: white;
-  padding: 15px;
-  border-radius: 6px;
-}
-
-/* ===== MOBILE RESPONSIVE ===== */
-@media (max-width: 600px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  body {
-    padding: 10px;
-  }
-
-  table {
-    font-size: 12px;
-  }
 } 

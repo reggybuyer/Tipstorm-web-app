@@ -1,11 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import UserLogin from "./components/UserLogin";
-import User from "./components/user";
-import Admin from "./components/admin";
-
+import User from "./components/User";
+import Admin from "./components/Admin";
 import "./style.css";
 
 function App() {

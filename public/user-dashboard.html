@@ -1,34 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TipStorm User Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<title>User Dashboard</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<h2>TipStorm Dashboard</h2>
+<div class="container">
+  <h2>Welcome, <span id="welcome"></span></h2>
 
-<div id="welcome"></div>
+  <div id="subscriptionMessage" class="info"></div>
 
-<label>Email</label>
-<input type="email" id="email">
+  <div class="section">
+    <label>Plan</label>
+    <select id="plan">
+      <option value="free">Free</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="vip">VIP</option>
+    </select>
 
-<label>Plan</label>
-<select id="plan">
-  <option value="free">Free</option>
-  <option value="weekly">Weekly</option>
-  <option value="monthly">Monthly</option>
-  <option value="vip">VIP</option>
-</select>
+    <button onclick="loadSlips()">Load Slips</button>
+  </div>
 
-<button onclick="loadSlips()">Load Slips</button>
-<button onclick="filterDate()">Filter by Date</button>
-<input type="date" id="filterDate">
+  <div id="slipGrid" class="grid"></div>
+</div>
 
-<div id="slipGrid" class="grid"></div>
-
-<!-- PAYMENT POPUP -->
+<!-- Subscription Popup -->
 <div id="paymentPopup" class="popup">
   <h3>Premium Access</h3>
   <p>
@@ -38,115 +37,11 @@
   </p>
   <p>
     Pay to Mpesa: <strong>0789906001</strong><br>
-    Send confirmation with your email via WhatsApp or SMS to:<br>
-    <strong>0789906001</strong>
+    Send confirmation via WhatsApp or SMS
   </p>
   <button onclick="closePopup()">Close</button>
 </div>
 
-<script>
-const API = "https://tipstorm-web-app-1.onrender.com";
-
-// WELCOME MESSAGE
-function showWelcome() {
-  const email = document.getElementById("email").value || "User";
-  document.getElementById("welcome").innerHTML =
-    `<div class="badge free">Welcome, ${email}</div>`;
-}
-
-// LOAD SLIPS
-async function loadSlips() {
-  showWelcome();
-
-  const plan = document.getElementById("plan").value;
-  const res = await fetch(`${API}/slips?plan=${plan}`);
-  const data = await res.json();
-  const grid = document.getElementById("slipGrid");
-  grid.innerHTML = "";
-
-  if (!data.slips || data.slips.length === 0) {
-    grid.innerHTML = "<p>No slips available</p>";
-    return;
-  }
-
-  data.slips.forEach(slip => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const locked = slip.access !== "free" && plan !== slip.access && plan !== "vip";
-
-    card.innerHTML = `
-      <div class="badge">
-        <strong>${slip.date}</strong> - ${slip.access.toUpperCase()}
-        <br>
-        Total Odds: ${slip.totalOdds}
-      </div>
-      <hr>
-    `;
-
-    if (locked) {
-      card.innerHTML += `
-        <div class="locked-message">
-          🔒 Premium slip — unlock to view games.
-          <br>
-          <button onclick="showPopup()">Unlock</button>
-        </div>
-      `;
-    } else {
-      slip.games.forEach(game => {
-        card.innerHTML += `
-          <div class="game-row">
-            <p><strong>${game.home} vs ${game.away}</strong></p>
-            <p>Market: ${game.overUnder || "N/A"}</p>
-            <p>Odd: ${game.odd}</p>
-            <p>Status: ${game.result.toUpperCase()}</p>
-          </div>
-          <hr>
-        `;
-      });
-    }
-
-    grid.appendChild(card);
-  });
-}
-
-// FILTER
-async function filterDate() {
-  const date = document.getElementById("filterDate").value;
-  const plan = document.getElementById("plan").value;
-
-  const res = await fetch(`${API}/slips?plan=${plan}&date=${date}`);
-  const data = await res.json();
-  const grid = document.getElementById("slipGrid");
-  grid.innerHTML = "";
-
-  if (!data.slips || data.slips.length === 0) {
-    grid.innerHTML = "<p>No slips for selected date</p>";
-    return;
-  }
-
-  data.slips.forEach(slip => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <strong>${slip.date}</strong><br>
-      Total Odds: ${slip.totalOdds}
-    `;
-    grid.appendChild(card);
-  });
-}
-
-// POPUP
-function showPopup() {
-  document.getElementById("paymentPopup").style.display = "block";
-}
-
-function closePopup() {
-  document.getElementById("paymentPopup").style.display = "none";
-}
-
-loadSlips();
-</script>
-
+<script src="user.js"></script>
 </body>
 </html> 
