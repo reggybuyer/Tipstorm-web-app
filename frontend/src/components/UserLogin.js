@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://tipstorm-web-app-1.onrender.com";
+const API = process.env.REACT_APP_API_BASE;
 
 export default function UserLogin() {
   const [email, setEmail] = useState("");

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 const API = process.env.REACT_APP_API_BASE;
 
+
 export default function Admin() {
   const [users, setUsers] = useState([]);
   const [games, setGames] = useState([]);

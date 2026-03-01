@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>User Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>Welcome, <span id="welcome"></span></h2>
+
+  <div id="subscriptionMessage" class="info"></div>
+
+  <div class="section">
+    <label>Plan</label>
+    <select id="plan">
+      <option value="free">Free</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="vip">VIP</option>
+    </select>
+
+    <button onclick="loadSlips()">Load Slips</button>
+  </div>
+
+  <div id="slipGrid" class="grid"></div>
+</div>
+
+<!-- Subscription Popup -->
+<div id="paymentPopup" class="popup">
+  <h3>Premium Access</h3>
+  <p>
+    Weekly: Ksh 500<br>
+    Monthly: Ksh 1000<br>
+    VIP: Ksh 1500
+  </p>
+  <p>
+    Pay to Mpesa: <strong>0789906001</strong><br>
+    Send confirmation via WhatsApp or SMS
+  </p>
+  <button onclick="closePopup()">Close</button>
+</div>
+
+<script src="user.js"></script>
+</body>
+</html> 

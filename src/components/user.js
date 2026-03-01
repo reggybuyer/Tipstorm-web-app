@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 
 const API = process.env.REACT_APP_API_BASE;
 
+
 export default function User() {
   const [slips, setSlips] = useState([]);
   const [user, setUser] = useState(null);

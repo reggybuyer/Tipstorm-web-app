@@ -1,0 +1,274 @@
+:root {
+  --bg: #ffffff;
+  --card: #f8f9fb;
+  --text: #222;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --primary: #0066ff;
+  --vip: #ff9800;
+  --border: #e0e0e0;
+  --overlay: rgba(0, 0, 0, 0.65);
+}
+
+body.dark {
+  --bg: #121212;
+  --card: #1f1f1f;
+  --text: #f5f5f5;
+  --shadow: rgba(255, 255, 255, 0.04);
+  --primary: #4f8bff;
+  --vip: #ffb74d;
+  --border: #2a2a2a;
+  --overlay: rgba(0, 0, 0, 0.8);
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* GENERAL */
+.section {
+  padding: 18px;
+}
+
+.card {
+  background: var(--card);
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+/* BADGES */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e5e5e5;
+}
+
+.badge.free {
+  background: #d7f7dc;
+  color: #1b7f31;
+}
+
+.badge.vip {
+  background: var(--vip);
+  color: white;
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.6);
+}
+
+.badge.pending {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.badge.win {
+  background: #d7f7dc;
+  color: #1b7f31;
+}
+
+.badge.lost {
+  background: #ffd7d7;
+  color: #b30000;
+}
+
+/* PLAN BADGES */
+.plan-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.plan-weekly {
+  background: #e6f0ff;
+  color: #0066ff;
+}
+
+.plan-monthly {
+  background: #e6f7eb;
+  color: #28a745;
+}
+
+.plan-vip {
+  background: #fff4e0;
+  color: #ff9800;
+  font-weight: 800;
+}
+
+/* VIP GLOW (ONLY FOR VIP CARDS) */
+.card.vip-glow {
+  border: 1px solid var(--vip);
+  box-shadow: 0 0 16px rgba(255, 152, 0, 0.45);
+}
+
+/* PREMIUM BLUR */
+.blur-teams {
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* INPUTS */
+input,
+select {
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
+
+/* BUTTONS */
+button {
+  padding: 6px 14px;
+  margin: 4px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  min-width: 80px;
+  transition: opacity 0.2s ease;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button.logout {
+  background: #c0392b;
+}
+
+button.success {
+  background: #28a745;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+table th {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+table th,
+table td {
+  padding: 10px;
+  border: 1px solid var(--border);
+}
+
+/* PAGINATION */
+.pagination {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pagination button {
+  min-width: 70px;
+}
+
+/* AUTH */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+.auth-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--primary), #003c99);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.auth-left.admin {
+  background: linear-gradient(135deg, #111, #2a2a2a);
+}
+
+.auth-logo {
+  width: 90px;
+  margin-bottom: 20px;
+}
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 28px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 8px 24px var(--shadow);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .auth-wrapper {
+    flex-direction: column;
+  }
+  .auth-left {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+} 

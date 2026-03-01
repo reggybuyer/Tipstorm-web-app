@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>Admin Dashboard</h2>
+
+  <div class="section">
+    <h3>Login</h3>
+    <input type="email" id="adminEmail" placeholder="Admin Email">
+    <input type="password" id="adminPassword" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+  </div>
+
+  <div class="section">
+    <h3>Users</h3>
+    <button onclick="loadUsers()">Load Users</button>
+    <div id="usersGrid" class="grid"></div>
+  </div>
+
+  <div class="section">
+    <h3>Create Slip</h3>
+    <label>Date</label>
+    <input type="date" id="slipDate">
+
+    <label>Access</label>
+    <select id="access">
+      <option value="free">Free</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="vip">VIP</option>
+    </select>
+
+    <div id="gamesContainer"></div>
+    <button onclick="addGame()">Add Game</button>
+
+    <div class="odds">
+      Total Odds: <span id="totalOddsDisplay">1.00</span>
+    </div>
+
+    <button onclick="createSlip()">Create Slip</button>
+  </div>
+
+  <div class="section">
+    <h3>Slips (Mark Results)</h3>
+    <div id="slipGrid" class="grid"></div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html> 
