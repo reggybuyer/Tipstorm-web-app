@@ -6,8 +6,6 @@ export default function User() {
   const [slips, setSlips] = useState([]);
   const [user, setUser] = useState(null);
   const [planSelect, setPlanSelect] = useState("weekly");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   const limit = 10;
@@ -25,9 +23,7 @@ export default function User() {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const data = await res.json();
-
       if (!data.success || !data.user) {
         logout();
         return;
@@ -57,25 +53,18 @@ export default function User() {
     if (!user) return false;
     if (slipAccess === "free") return true;
     if (!user.premium) return false;
-
     if (user.plan === "weekly") return slipAccess === "weekly";
     if (user.plan === "monthly")
       return slipAccess === "weekly" || slipAccess === "monthly";
     if (user.plan === "vip") return true;
-
     return false;
   }
 
   async function loadSlips(newPage = 1) {
     try {
-      const res = await fetch(
-        `${API}/slips?page=${newPage}&limit=${limit}`
-      );
+      const res = await fetch(`${API}/slips?page=${newPage}&limit=${limit}`);
       const data = await res.json();
-
       setSlips(data.slips || []);
-      setPages(data.pages || 1);
-      setPage(newPage);
     } catch (err) {
       console.error("Slips error:", err);
       setSlips([]);
@@ -106,7 +95,6 @@ export default function User() {
           message: "User request activation",
         }),
       });
-
       alert("Request sent successfully");
     } catch {
       alert("Request failed");
@@ -118,7 +106,6 @@ export default function User() {
       window.location.href = "/login";
       return;
     }
-
     loadProfile();
     loadSlips(1);
   }, [token, loadProfile]);
@@ -166,7 +153,6 @@ export default function User() {
 
       {slips.map((slip) => {
         const allowed = hasAccess(slip.access);
-
         return (
           <div key={slip._id}>
             {!allowed && <div>Upgrade Plan</div>}
