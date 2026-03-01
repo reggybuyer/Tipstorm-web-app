@@ -1,23 +1,29 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import UserLogin from "./components/UserLogin";
 import User from "./components/User";
-import Admin from "./components/Admin";
+import UserRegister from "./components/UserRegister";
+import Admin from "./components/admin";
+import AdminLogin from "./components/AdminLogin";
+
 import "./style.css";
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<UserLogin />} />
-        <Route path="/login" element={<UserLogin />} />
-        <Route path="/user" element={<User />} />
-        <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+const root = ReactDOM.createRoot(document.getElementById("root"));
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />); 
+root.render(
+  <BrowserRouter>
+    <Routes>
+      {/* User */}
+      <Route path="/" element={<UserLogin />} />
+      <Route path="/login" element={<UserLogin />} />
+      <Route path="/register" element={<UserRegister />} />
+      <Route path="/user" element={<User />} />
+
+      {/* Admin */}
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/admin" element={<Admin />} />
+    </Routes>
+  </BrowserRouter>
+); 
