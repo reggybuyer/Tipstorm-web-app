@@ -16,7 +16,6 @@ export default function AdminLogin() {
     });
 
     const data = await res.json();
-
     if (!data.success || data.user.role !== "admin") {
       alert("Admin login failed");
       return;
@@ -24,9 +23,7 @@ export default function AdminLogin() {
 
     localStorage.setItem("token", data.token);
     localStorage.setItem("role", data.user.role);
-    localStorage.setItem("email", data.user.email);
 
-    alert("Welcome Admin");
     navigate("/admin");
   }
 
