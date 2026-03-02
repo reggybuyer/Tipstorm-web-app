@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import UserLogin from "./components/UserLogin";
 import UserRegister from "./components/UserRegister";
 import AdminLogin from "./components/AdminLogin";
-import User from "./components/User";
+import User from "./components/user";
 import Admin from "./components/admin";
 
 import "./style.css";

@@ -40,9 +40,10 @@ body {
   box-shadow: 0 4px 12px var(--shadow);
   border: 1px solid var(--border);
   position: relative;
+  margin-bottom: 14px;
 }
 
-/* GRID */
+/* GRID (modern slip cards) */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -51,12 +52,12 @@ body {
 
 /* BADGES */
 .badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #e5e5e5;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  text-align: center;
+  font-size: 13px;
 }
 
 .badge.free {
@@ -110,7 +111,7 @@ body {
   font-weight: 800;
 }
 
-/* VIP GLOW (ONLY FOR VIP CARDS) */
+/* VIP GLOW */
 .card.vip-glow {
   border: 1px solid var(--vip);
   box-shadow: 0 0 16px rgba(255, 152, 0, 0.45);
@@ -119,7 +120,6 @@ body {
 /* PREMIUM BLUR */
 .blur-teams {
   filter: blur(8px);
-  pointer-events: none;
 }
 
 .lock-overlay {
@@ -250,6 +250,78 @@ table td {
   box-shadow: 0 8px 24px var(--shadow);
   border: 1px solid var(--border);
   text-align: center;
+}
+
+/* SLIP CARD MODERN */
+.slip-card {
+  background: var(--card);
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.slip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slip-body {
+  margin-top: 8px;
+}
+
+.game-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.slip-footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.view-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.locked-card {
+  position: relative;
+}
+
+/* MODAL DETAILS */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modal-content {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  position: relative;
+}
+
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
 }
 
 /* MOBILE */

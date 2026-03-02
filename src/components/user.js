@@ -2,16 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 
 const API = process.env.REACT_APP_API_BASE;
 
-
 export default function User() {
   const [slips, setSlips] = useState([]);
   const [user, setUser] = useState(null);
   const [planSelect, setPlanSelect] = useState("weekly");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const limit = 10;
   const token = localStorage.getItem("token");
 
   function logout() {
@@ -22,63 +18,29 @@ export default function User() {
   const loadProfile = useCallback(async () => {
     try {
       const res = await fetch(`${API}/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
-
       if (!data.success || !data.user) {
         logout();
         return;
       }
 
-      const userData = data.user;
-
-      if (userData.premium && userData.expiresAt) {
-        const now = new Date();
-        const expiry = new Date(userData.expiresAt);
-        if (now > expiry) {
-          logout();
-          return;
-        }
-      }
-
-      setUser(userData);
-    } catch (err) {
-      console.error("Profile error:", err);
+      setUser(data.user);
+    } catch {
       logout();
     } finally {
       setLoading(false);
     }
   }, [token]);
 
-  function hasAccess(slipAccess) {
-    if (!user) return false;
-    if (slipAccess === "free") return true;
-    if (!user.premium) return false;
-
-    if (user.plan === "weekly") return slipAccess === "weekly";
-    if (user.plan === "monthly")
-      return slipAccess === "weekly" || slipAccess === "monthly";
-    if (user.plan === "vip") return true;
-
-    return false;
-  }
-
-  async function loadSlips(newPage = 1) {
+  async function loadSlips() {
     try {
-      const res = await fetch(
-        `${API}/slips?page=${newPage}&limit=${limit}`
-      );
+      const res = await fetch(`${API}/slips`);
       const data = await res.json();
-
       setSlips(data.slips || []);
-      setPages(data.pages || 1);
-      setPage(newPage);
-    } catch (err) {
-      console.error("Slips error:", err);
+    } catch {
       setSlips([]);
     }
   }
@@ -108,7 +70,7 @@ export default function User() {
         }),
       });
 
-      alert("Request sent successfully");
+      alert("Request sent. Admin will activate.");
     } catch {
       alert("Request failed");
     }
@@ -121,7 +83,7 @@ export default function User() {
     }
 
     loadProfile();
-    loadSlips(1);
+    loadSlips();
   }, [token, loadProfile]);
 
   if (loading) return <div className="section"><p>Loading...</p></div>;
@@ -134,18 +96,30 @@ export default function User() {
         <button onClick={logout}>Logout</button>
       </div>
 
-      {user.premium && (
-        <p>
-          {user.plan.toUpperCase()} — Expires in {getRemainingDays()} days
-        </p>
-      )}
-
-      {user.plan !== "vip" && (
-        <div>
+      {user.premium ? (
+        <div className="card">
+          <span className={`plan-badge plan-${user.plan}`}>
+            {user.plan.toUpperCase()}
+          </span>
+          <p>
+            Expires: {new Date(user.expiresAt).toDateString()} (
+            {getRemainingDays()} days)
+          </p>
+        </div>
+      ) : (
+        <div className="card">
           <h3>Upgrade Plan</h3>
           <p>
-            Plan: <strong>{planSelect.toUpperCase()}</strong><br />
-            Amount: <strong>Ksh {getAmount()}</strong>
+            Send money to:<br />
+            Paybill: <strong>625625</strong><br />
+            Account: <strong>20170457</strong>
+          </p>
+
+          <p>
+            After payment:<br />
+            ✔ forward payment message<br />
+            ✔ email<br />
+            ✔ WhatsApp: <strong>0789906001</strong>
           </p>
 
           <select
@@ -163,18 +137,39 @@ export default function User() {
         </div>
       )}
 
-      <button onClick={() => loadSlips(1)}>Load Slips</button>
+      <div className="card">
+        <h3>Slips</h3>
 
-      {slips.map((slip) => {
-        const allowed = hasAccess(slip.access);
+        {slips.length === 0 && <p>No slips available</p>}
 
-        return (
-          <div key={slip._id}>
-            {!allowed && <div>Upgrade Plan</div>}
-            <p>{slip.date} — {slip.access}</p>
-          </div>
-        );
-      })}
+        <div className="grid">
+          {slips.map((slip) => {
+            const allowed =
+              slip.access === "free" ||
+              (user.premium &&
+                ((user.plan === "weekly" && slip.access === "weekly") ||
+                 (user.plan === "monthly" &&
+                   (slip.access === "weekly" || slip.access === "monthly")) ||
+                 user.plan === "vip"));
+
+            return (
+              <div key={slip._id} className="badge">
+                {allowed ? (
+                  <p>
+                    <strong>{slip.date}</strong>
+                    <br />
+                    <span className={`badge ${slip.access}`}>
+                      {slip.access.toUpperCase()}
+                    </span>
+                  </p>
+                ) : (
+                  <p>Upgrade to view this slip</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 } 

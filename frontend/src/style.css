@@ -40,9 +40,10 @@ body {
   box-shadow: 0 4px 12px var(--shadow);
   border: 1px solid var(--border);
   position: relative;
+  margin-bottom: 14px;
 }
 
-/* GRID */
+/* GRID (modern slip cards) */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -51,12 +52,12 @@ body {
 
 /* BADGES */
 .badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #e5e5e5;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  text-align: center;
+  font-size: 13px;
 }
 
 .badge.free {
@@ -110,7 +111,7 @@ body {
   font-weight: 800;
 }
 
-/* VIP GLOW (ONLY FOR VIP CARDS) */
+/* VIP GLOW */
 .card.vip-glow {
   border: 1px solid var(--vip);
   box-shadow: 0 0 16px rgba(255, 152, 0, 0.45);
@@ -257,6 +258,7 @@ table td {
   .auth-wrapper {
     flex-direction: column;
   }
+
   .auth-left {
     padding: 30px 20px;
   }
@@ -268,6 +270,7 @@ table td {
     overflow-x: auto;
     white-space: nowrap;
   }
+
   .grid {
     grid-template-columns: 1fr;
   }
