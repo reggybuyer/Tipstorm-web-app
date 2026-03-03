@@ -7,13 +7,13 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-/* Middleware */
-app.use(cors());
+/* ================= MIDDLEWARE ================= */
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 const SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-/* MongoDB */
+/* ================= DATABASE ================= */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
@@ -22,7 +22,7 @@ mongoose
     process.exit(1);
   });
 
-/* Schemas */
+/* ================= SCHEMAS ================= */
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -60,7 +60,7 @@ const User = mongoose.model("User", userSchema);
 const Slip = mongoose.model("Slip", slipSchema);
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
-/* Auto expire premium */
+/* ================= AUTO EXPIRE PREMIUM ================= */
 app.use(async (req, res, next) => {
   try {
     const now = new Date();
@@ -72,7 +72,22 @@ app.use(async (req, res, next) => {
   next();
 });
 
-/* AUTH */
+/* ================= AUTH HELPERS ================= */
+function verifyAdmin(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(403).json({ success: false });
+
+  try {
+    const decoded = jwt.verify(token, SECRET);
+    if (decoded.role !== "admin") return res.status(403).json({ success: false });
+    req.user = decoded;
+    next();
+  } catch {
+    return res.status(403).json({ success: false });
+  }
+}
+
+/* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -88,6 +103,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+/* ================= LOGIN ================= */
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -117,6 +133,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+/* ================= PROFILE ================= */
 app.get("/profile", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -141,7 +158,7 @@ app.get("/profile", async (req, res) => {
   }
 });
 
-/* SUBSCRIPTION REQUEST */
+/* ================= SUBSCRIPTION REQUEST ================= */
 app.post("/request-subscription", async (req, res) => {
   try {
     const { email, plan, message } = req.body;
@@ -152,22 +169,7 @@ app.post("/request-subscription", async (req, res) => {
   }
 });
 
-/* ADMIN AUTH */
-function verifyAdmin(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(403).json({ success: false });
-
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    if (decoded.role !== "admin") return res.status(403).json({ success: false });
-    req.user = decoded;
-    next();
-  } catch {
-    return res.status(403).json({ success: false });
-  }
-}
-
-/* ADMIN ROUTES */
+/* ================= ADMIN ROUTES ================= */
 app.get("/all-users", verifyAdmin, async (req, res) => {
   const users = await User.find();
   res.json({ success: true, users });
@@ -201,7 +203,7 @@ app.post("/approve-request", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* SLIPS */
+/* ================= SLIPS ================= */
 app.post("/slips", verifyAdmin, async (req, res) => {
   const { date, games, access } = req.body;
   if (!games?.length) return res.status(400).json({ success: false });
@@ -223,6 +225,7 @@ app.post("/slips", verifyAdmin, async (req, res) => {
   res.json({ success: true, slip });
 });
 
+/* GET SLIPS (PAGINATION) */
 app.get("/slips", async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const skip = (page - 1) * limit;
@@ -283,6 +286,6 @@ app.post("/slip-result", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* START */
+/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
