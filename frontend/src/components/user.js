@@ -24,10 +24,12 @@ export default function User() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+
       if (!data.success || !data.user) {
         logout();
         return;
       }
+
       setUser(data.user);
     } catch {
       logout();
@@ -71,7 +73,7 @@ export default function User() {
           message: "User requested manual activation",
         }),
       });
-      alert("Payment request sent. Admin will activate.");
+      alert("Payment request sent. After payment, forward confirmation to WhatsApp 0789906001.");
     } catch {
       alert("Request failed.");
     }
@@ -94,28 +96,31 @@ export default function User() {
     loadSlips();
   }, [token, loadProfile]);
 
-  if (loading)
-    return <div className="section"><p>Loading...</p></div>;
-
-  if (!user)
-    return <div className="section"><p>Session expired.</p></div>;
+  if (loading) return <div className="section">Loading...</div>;
+  if (!user) return <div className="section">Session expired.</div>;
 
   return (
     <div className="section">
+      {/* HEADER */}
       <div className="header-row">
         <h2>Welcome, {user.email}</h2>
-        <button onClick={logout}>Logout</button>
+        <button className="btn btn-logout" onClick={logout}>
+          Logout
+        </button>
       </div>
 
-      {/* PREMIUM STATUS */}
+      {/* PREMIUM STATUS OR UPGRADE */}
       {user.premium ? (
         <div className="card premium-card">
           <span className={`plan-badge plan-${user.plan}`}>
             {user.plan.toUpperCase()} PLAN
           </span>
+
           <p>
-            Expires: <strong>{new Date(user.expiresAt).toDateString()}</strong>
+            Expires:{" "}
+            <strong>{new Date(user.expiresAt).toDateString()}</strong>
           </p>
+
           <p>
             Remaining: <strong>{getRemainingDays()} days</strong>
           </p>
@@ -123,17 +128,20 @@ export default function User() {
       ) : (
         <div className="card upgrade-card">
           <h3>Upgrade Plan</h3>
-          <p>
-            Send money to:<br />
-            <strong>Paybill:</strong> 625625<br />
-            <strong>Account:</strong> 20170457
-          </p>
-          <p>
-            After payment:<br />
-            ✔ forward payment message<br />
-            ✔ email confirmation<br />
-            ✔ WhatsApp: <strong>0789906001</strong>
-          </p>
+
+          <div className="payment-box">
+            <p><strong>Step 1:</strong> Pay via M-Pesa</p>
+            <p><strong>Paybill:</strong> 625625</p>
+            <p><strong>Account:</strong> 20170457</p>
+          </div>
+
+          <div className="payment-box">
+            <p><strong>Step 2:</strong> After payment</p>
+            <p>Forward M-Pesa confirmation message to:</p>
+            <p><strong>WhatsApp: 0789906001</strong></p>
+            <p>OR</p>
+            <p>Email: <strong>support@tipstorm.com</strong></p>
+          </div>
 
           <select
             value={planSelect}
@@ -144,20 +152,28 @@ export default function User() {
             <option value="vip">VIP - Ksh 1500</option>
           </select>
 
-          <p className="amount-display">
-            Selected: <strong>{planSelect.toUpperCase()}</strong><br />
+          <div className="amount-display">
+            Selected:
+            <span
+              className={`plan-badge plan-${planSelect}`}
+              style={{ marginLeft: "8px" }}
+            >
+              {planSelect.toUpperCase()}
+            </span>
+            <br />
             Amount: <strong>Ksh {getAmount()}</strong>
-          </p>
+          </div>
 
-          <button onClick={requestActivation}>
+          <button className="btn btn-upgrade" onClick={requestActivation}>
             Request Activation
           </button>
         </div>
       )}
 
-      {/* SLIPS GRID */}
+      {/* SLIPS */}
       <div className="card">
         <h3>Available Slips</h3>
+
         {slips.length === 0 && <p>No slips available</p>}
 
         <div className="grid">
@@ -165,28 +181,18 @@ export default function User() {
             const allowed =
               slip.access === "free" ||
               (user.premium &&
-                ((user.plan === "weekly" && slip.access === "weekly") ||
-                  (user.plan === "monthly" &&
-                    (slip.access === "weekly" || slip.access === "monthly")) ||
-                  user.plan === "vip"));
+                (user.plan === "vip" || user.plan === slip.access));
 
             const totalOdds = slip.games?.reduce(
               (acc, g) => acc * (parseFloat(g.odd) || 1),
               1
             );
 
-            const resultBadge = (result) =>
-              result === "win"
-                ? "badge win"
-                : result === "lost"
-                ? "badge lost"
-                : "badge pending";
-
             return (
               <div key={slip._id} className="slip-card">
                 <div className="slip-header">
                   <strong>{slip.date}</strong>
-                  <span className={`badge ${slip.access}`}>
+                  <span className={`plan-badge plan-${slip.access}`}>
                     {slip.access.toUpperCase()}
                   </span>
                 </div>
@@ -194,10 +200,32 @@ export default function User() {
                 <div className={allowed ? "" : "blur-teams"}>
                   {slip.games?.map((g, i) => (
                     <div key={i} className="game-row">
-                      <span>{g.home} vs {g.away}</span>
-                      <span>Odd: {g.odd}</span>
-                      <span className={resultBadge(g.result)}>
-                        {g.result}
+                      <div className="teams">
+                        {g.home} vs {g.away}
+                      </div>
+
+                      {g.type && (
+                        <span
+                          className={`ou-badge ${
+                            g.type === "Over"
+                              ? "ou-over"
+                              : "ou-under"
+                          }`}
+                        >
+                          {g.type} {g.line}
+                        </span>
+                      )}
+
+                      <div className="odd">Odd: {g.odd}</div>
+
+                      <span
+                        className={`result-badge result-${
+                          g.result
+                            ? g.result.toLowerCase()
+                            : "pending"
+                        }`}
+                      >
+                        {g.result || "Pending"}
                       </span>
                     </div>
                   ))}
@@ -205,48 +233,84 @@ export default function User() {
 
                 <div className="slip-footer">
                   <span>Total Odds:</span>
-                  <strong>{totalOdds.toFixed(2)}</strong>
+                  <strong>{totalOdds?.toFixed(2)}</strong>
                 </div>
 
                 {allowed ? (
-                  <button className="view-btn" onClick={() => openSlip(slip)}>
-                    View Details
+                  <button
+                    className="btn btn-view"
+                    onClick={() => openSlip(slip)}
+                  >
+                    View Full Slip
                   </button>
                 ) : (
-                  <div className="lock-overlay">Upgrade to view</div>
+                  <div className="lock-overlay">
+                    Premium slip — upgrade to view
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
 
-        {/* PAGINATION */}
         <div className="pagination">
-          <button onClick={() => loadSlips(page - 1)} disabled={page <= 1}>
+          <button
+            className="btn"
+            onClick={() => loadSlips(page - 1)}
+            disabled={page <= 1}
+          >
             Previous
           </button>
+
           <span>Page {page}</span>
-          <button onClick={() => loadSlips(page + 1)}>
+
+          <button
+            className="btn"
+            onClick={() => loadSlips(page + 1)}
+          >
             Next
           </button>
         </div>
       </div>
 
-      {/* SLIP DETAILS MODAL */}
+      {/* MODAL */}
       {selected && (
         <div className="modal">
           <div className="modal-content">
             <button className="close" onClick={closeSlip}>
               ×
             </button>
-            <h3>{selected.date}</h3>
+
+            <h3>{selected.date} - Full Details</h3>
 
             {selected.games?.map((g, i) => (
               <div key={i} className="game-row">
-                <span>{g.home} vs {g.away}</span>
-                <span>Odd: {g.odd}</span>
-                <span className={resultBadge(g.result)}>
-                  {g.result}
+                <div className="teams">
+                  {g.home} vs {g.away}
+                </div>
+
+                {g.type && (
+                  <span
+                    className={`ou-badge ${
+                      g.type === "Over"
+                        ? "ou-over"
+                        : "ou-under"
+                    }`}
+                  >
+                    {g.type} {g.line}
+                  </span>
+                )}
+
+                <div className="odd">Odd: {g.odd}</div>
+
+                <span
+                  className={`result-badge result-${
+                    g.result
+                      ? g.result.toLowerCase()
+                      : "pending"
+                  }`}
+                >
+                  {g.result || "Pending"}
                 </span>
               </div>
             ))}
