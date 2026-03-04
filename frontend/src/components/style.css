@@ -20,7 +20,7 @@
   align-items: center;
 }
 
-/* ================= GRID (slips) ================= */
+/* ================= GRID ================= */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -65,39 +65,45 @@
   color: white;
 }
 
-.plan-free { background: #6b7280; }
-.plan-weekly { background: #3b82f6; }
-.plan-monthly { background: #8b5cf6; }
-.plan-vip { background: #f59e0b; }
-.plan-premium { background: #10b981; }
+.plan-free {
+  background: #6b7280;
+}
+
+.plan-weekly {
+  background: #3b82f6;
+}
+
+.plan-monthly {
+  background: #8b5cf6;
+}
+
+.plan-vip {
+  background: #f59e0b;
+}
+
+.plan-premium {
+  background: #10b981;
+}
 
 /* ================= RESULT BADGES ================= */
-.badge-win {
+.result-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.result-win {
   background: #16a34a;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  border: none;
-  cursor: pointer;
 }
 
-.badge-lost {
+.result-lost {
   background: #dc2626;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  border: none;
-  cursor: pointer;
 }
 
-.badge-pending {
+.result-pending {
   background: #6b7280;
-  color: white;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
 }
 
 /* ================= OVER UNDER ================= */
@@ -117,19 +123,6 @@
 .ou-under {
   background: #9333ea;
 }
-
-/* ================= RESULT BADGES (user) ================= */
-.result-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
-.result-win { background: #16a34a; }
-.result-lost { background: #dc2626; }
-.result-pending { background: #6b7280; }
 
 /* ================= GAME ROW ================= */
 .game-row {
@@ -208,6 +201,10 @@
 .amount-display {
   margin: 10px 0;
   font-weight: bold;
+}
+
+.upgrade-card {
+  margin-top: 15px;
 }
 
 /* ================= MODAL ================= */

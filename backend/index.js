@@ -8,11 +8,18 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-/* MIDDLEWARE */
-app.use(cors({ origin: "*" }));
+/* ================= MIDDLEWARE ================= */
+app.use(cors({
+  origin: ["https://tipstorm-frontend.vercel.app"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+app.options("*", cors());
 app.use(express.json());
 
-/* DATABASE */
+/* ================= DATABASE ================= */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
@@ -21,7 +28,7 @@ mongoose
     process.exit(1);
   });
 
-/* SCHEMAS */
+/* ================= SCHEMAS ================= */
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: String,
@@ -59,7 +66,7 @@ const User = mongoose.model("User", userSchema);
 const Slip = mongoose.model("Slip", slipSchema);
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
-/* AUTO EXPIRE PREMIUM */
+/* ================= AUTO EXPIRE PREMIUM ================= */
 app.use(async (req, res, next) => {
   try {
     const now = new Date();
@@ -71,7 +78,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
-/* ADMIN AUTH */
+/* ================= ADMIN AUTH ================= */
 function verifyAdmin(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(403).json({ success: false });
@@ -86,7 +93,7 @@ function verifyAdmin(req, res, next) {
   }
 }
 
-/* REGISTER */
+/* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -101,7 +108,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-/* LOGIN */
+/* ================= LOGIN ================= */
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -131,7 +138,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* PROFILE */
+/* ================= PROFILE ================= */
 app.get("/profile", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -156,7 +163,7 @@ app.get("/profile", async (req, res) => {
   }
 });
 
-/* SUBSCRIPTION REQUEST */
+/* ================= SUBSCRIPTION REQUEST ================= */
 app.post("/request-subscription", async (req, res) => {
   try {
     const { email, plan, message } = req.body;
@@ -167,7 +174,7 @@ app.post("/request-subscription", async (req, res) => {
   }
 });
 
-/* ADMIN ROUTES */
+/* ================= ADMIN ROUTES ================= */
 app.get("/all-users", verifyAdmin, async (req, res) => {
   const users = await User.find();
   res.json({ success: true, users });
@@ -201,7 +208,7 @@ app.post("/approve-request", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* SLIPS CREATE */
+/* ================= SLIPS CREATE ================= */
 app.post("/slips", verifyAdmin, async (req, res) => {
   const { date, games, access } = req.body;
   if (!games?.length) return res.status(400).json({ success: false });
@@ -213,7 +220,7 @@ app.post("/slips", verifyAdmin, async (req, res) => {
   res.json({ success: true, slip });
 });
 
-/* SLIPS GET (PAGINATION FIX) */
+/* ================= SLIPS GET (PAGINATION) ================= */
 app.get("/slips", async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -232,7 +239,7 @@ app.get("/slips", async (req, res) => {
   });
 });
 
-/* EDIT SLIP */
+/* ================= EDIT SLIP ================= */
 app.put("/slips/:id", verifyAdmin, async (req, res) => {
   const { id } = req.params;
   const { date, access, games } = req.body;
@@ -241,16 +248,17 @@ app.put("/slips/:id", verifyAdmin, async (req, res) => {
   if (!slip) return res.status(404).json({ success: false });
 
   const totalOdds = games.reduce((acc, g) => acc * (parseFloat(g.odd) || 1), 1);
+
   slip.date = date;
   slip.access = access;
   slip.totalOdds = totalOdds;
   slip.games = games;
-  await slip.save();
 
+  await slip.save();
   res.json({ success: true, slip });
 });
 
-/* DELETE SLIP */
+/* ================= DELETE SLIP ================= */
 app.delete("/slips/:id", verifyAdmin, async (req, res) => {
   const { id } = req.params;
   const slip = await Slip.findById(id);
@@ -260,7 +268,7 @@ app.delete("/slips/:id", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* RESULT UPDATE */
+/* ================= RESULT UPDATE ================= */
 app.post("/slip-result", verifyAdmin, async (req, res) => {
   const { slipId, gameIndex, result } = req.body;
   const slip = await Slip.findById(slipId);
@@ -271,6 +279,6 @@ app.post("/slip-result", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* SERVER */
+/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
