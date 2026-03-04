@@ -1,5 +1,4 @@
 /* ================= GENERAL ================= */
-
 .section {
   padding: 20px;
   max-width: 1200px;
@@ -12,7 +11,7 @@
   padding: 18px;
   border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .header-row {
@@ -21,8 +20,14 @@
   align-items: center;
 }
 
-/* ================= BUTTONS ================= */
+/* ================= GRID (slips) ================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
 
+/* ================= BUTTONS ================= */
 .btn {
   padding: 8px 14px;
   border-radius: 8px;
@@ -52,7 +57,6 @@
 }
 
 /* ================= PLAN BADGES ================= */
-
 .plan-badge {
   padding: 4px 10px;
   border-radius: 20px;
@@ -68,7 +72,6 @@
 .plan-premium { background: #10b981; }
 
 /* ================= RESULT BADGES ================= */
-
 .badge-win {
   background: #16a34a;
   color: white;
@@ -98,7 +101,6 @@
 }
 
 /* ================= OVER UNDER ================= */
-
 .ou-badge {
   padding: 4px 10px;
   border-radius: 6px;
@@ -116,9 +118,20 @@
   background: #9333ea;
 }
 
-/* ================= GAME ROW ================= */
+/* ================= RESULT BADGES (user) ================= */
+.result-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
 
-/* Updated grid for Admin */
+.result-win { background: #16a34a; }
+.result-lost { background: #dc2626; }
+.result-pending { background: #6b7280; }
+
+/* ================= GAME ROW ================= */
 .game-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
@@ -137,7 +150,6 @@
 }
 
 /* ================= SLIPS ================= */
-
 .slip-card {
   background: #f9fafb;
   padding: 15px;
@@ -150,8 +162,20 @@
   margin-bottom: 8px;
 }
 
-/* ================= PAGINATION ================= */
+.slip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
+.slip-footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+/* ================= PAGINATION ================= */
 .pagination {
   display: flex;
   justify-content: center;
@@ -173,7 +197,6 @@
 }
 
 /* ================= UPGRADE SECTION ================= */
-
 .payment-box {
   background: #f3f4f6;
   padding: 10px;
@@ -187,8 +210,51 @@
   font-weight: bold;
 }
 
-/* ================= RESPONSIVE ================= */
+/* ================= MODAL ================= */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* ================= BLUR FOR PREMIUM ================= */
+.blur-teams {
+  filter: blur(4px);
+}
+
+/* ================= LOCK OVERLAY ================= */
+.lock-overlay {
+  background: #f87171;
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
   .game-row {
     grid-template-columns: 1fr;

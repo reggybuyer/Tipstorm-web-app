@@ -6,14 +6,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const app = express();
+const SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-/* ================= MIDDLEWARE ================= */
+/* MIDDLEWARE */
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-const SECRET = process.env.JWT_SECRET || "supersecretkey";
-
-/* ================= DATABASE ================= */
+/* DATABASE */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
@@ -22,10 +21,10 @@ mongoose
     process.exit(1);
   });
 
-/* ================= SCHEMAS ================= */
+/* SCHEMAS */
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: String,
   role: { type: String, default: "user" },
   premium: { type: Boolean, default: false },
   plan: { type: String, default: "free" },
@@ -60,7 +59,7 @@ const User = mongoose.model("User", userSchema);
 const Slip = mongoose.model("Slip", slipSchema);
 const SubscriptionRequest = mongoose.model("SubscriptionRequest", requestSchema);
 
-/* ================= AUTO EXPIRE PREMIUM ================= */
+/* AUTO EXPIRE PREMIUM */
 app.use(async (req, res, next) => {
   try {
     const now = new Date();
@@ -72,7 +71,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
-/* ================= AUTH HELPERS ================= */
+/* ADMIN AUTH */
 function verifyAdmin(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(403).json({ success: false });
@@ -87,7 +86,7 @@ function verifyAdmin(req, res, next) {
   }
 }
 
-/* ================= REGISTER ================= */
+/* REGISTER */
 app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -96,14 +95,13 @@ app.post("/register", async (req, res) => {
 
     const hashed = bcrypt.hashSync(password, 10);
     await User.create({ email, password: hashed });
-
     res.json({ success: true });
   } catch {
     res.status(500).json({ success: false });
   }
 });
 
-/* ================= LOGIN ================= */
+/* LOGIN */
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -133,7 +131,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ================= PROFILE ================= */
+/* PROFILE */
 app.get("/profile", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -158,7 +156,7 @@ app.get("/profile", async (req, res) => {
   }
 });
 
-/* ================= SUBSCRIPTION REQUEST ================= */
+/* SUBSCRIPTION REQUEST */
 app.post("/request-subscription", async (req, res) => {
   try {
     const { email, plan, message } = req.body;
@@ -169,7 +167,7 @@ app.post("/request-subscription", async (req, res) => {
   }
 });
 
-/* ================= ADMIN ROUTES ================= */
+/* ADMIN ROUTES */
 app.get("/all-users", verifyAdmin, async (req, res) => {
   const users = await User.find();
   res.json({ success: true, users });
@@ -203,42 +201,33 @@ app.post("/approve-request", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* ================= SLIPS ================= */
+/* SLIPS CREATE */
 app.post("/slips", verifyAdmin, async (req, res) => {
   const { date, games, access } = req.body;
   if (!games?.length) return res.status(400).json({ success: false });
 
-  const totalOdds = games.reduce(
-    (acc, g) => acc * (parseFloat(g.odd) || 1),
-    1
-  );
-
+  const totalOdds = games.reduce((acc, g) => acc * (parseFloat(g.odd) || 1), 1);
   if (totalOdds < 2) return res.status(400).json({ success: false });
 
-  const slip = await Slip.create({
-    date,
-    access,
-    totalOdds,
-    games,
-  });
-
+  const slip = await Slip.create({ date, access, totalOdds, games });
   res.json({ success: true, slip });
 });
 
-/* GET SLIPS (PAGINATION) */
+/* SLIPS GET (PAGINATION FIX) */
 app.get("/slips", async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
   const total = await Slip.countDocuments();
   const slips = await Slip.find()
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .sort({ date: -1 });
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limit);
 
   res.json({
     success: true,
-    slips,
+    slips: slips || [],
     pages: Math.ceil(total / limit),
   });
 });
@@ -251,17 +240,13 @@ app.put("/slips/:id", verifyAdmin, async (req, res) => {
   const slip = await Slip.findById(id);
   if (!slip) return res.status(404).json({ success: false });
 
-  const totalOdds = games.reduce(
-    (acc, g) => acc * (parseFloat(g.odd) || 1),
-    1
-  );
-
+  const totalOdds = games.reduce((acc, g) => acc * (parseFloat(g.odd) || 1), 1);
   slip.date = date;
   slip.access = access;
   slip.totalOdds = totalOdds;
   slip.games = games;
-
   await slip.save();
+
   res.json({ success: true, slip });
 });
 
@@ -286,6 +271,6 @@ app.post("/slip-result", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/* ================= START SERVER ================= */
+/* SERVER */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 

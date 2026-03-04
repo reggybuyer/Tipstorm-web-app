@@ -73,7 +73,7 @@ export default function User() {
           message: "User requested manual activation",
         }),
       });
-      alert("Payment request sent. After payment, forward confirmation to WhatsApp 0789906001.");
+      alert("Payment request sent. After payment, forward confirmation message and email to WhatsApp 0789906001.");
     } catch {
       alert("Request failed.");
     }
